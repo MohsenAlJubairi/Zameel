@@ -1,0 +1,187 @@
+@model HomeIndexViewModel
+@{
+    ViewData["Title"] = "زميل | السوق الجامعي الذكي";
+    var filter = Model.activeFilter;
+    var hasActiveFilter = filter.universityId.HasValue || filter.type.HasValue || !string.IsNullOrWhiteSpace(filter.searchTerm);
+}
+
+<!-- 1. Hero Section: Introduces Zameel with Clarity & Purpose -->
+<div class="salla-hero mb-4">
+    <div class="row align-items-center g-3">
+        <div class="col-12 col-lg-7">
+            <div class="campus-live-pulse mb-3">
+                <span class="pulse-dot"></span>
+                <span>سوق التبادل المباشر لطلاب الجامعات</span>
+            </div>
+
+            <h1 class="fw-bold text-white mb-2" style="font-size: 1.85rem; line-height: 1.35;">
+                تبادل كتبك ومستلزماتك الدراسية <br class="d-none d-sm-inline" />داخل كليتك <span style="color: var(--brand-mint);">يداً بيد</span>
+            </h1>
+
+            <p class="mb-0 text-white-50" style="font-size: 0.95rem; line-height: 1.7; max-width: 580px;">
+                المنصة الطلابية المباشرة لبيع، شراء، وإعارة المراجع الأكاديمية وحزم المواد والمعدات الدراسية بين زملاء الجامعة بلا وسطاء أو عمولات.
+            </p>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <!-- Search Bar in Hero -->
+            <form method="get" asp-controller="Home" asp-action="Index">
+                @if (filter.universityId.HasValue)
+                {
+                    <input type="hidden" name="universityId" value="@filter.universityId" />
+                }
+                @if (filter.type.HasValue)
+                {
+                    <input type="hidden" name="type" value="@filter.type" />
+                }
+                <div class="bg-white p-2 rounded-4 shadow-lg d-flex align-items-center gap-2">
+                    <input type="text" name="searchTerm" value="@filter.searchTerm" class="form-control border-0 shadow-none px-3 py-2" placeholder="ابحث عن كتاب، مرجع، أو أداة معملية..." style="font-size: 0.92rem;" />
+                    <button type="submit" class="btn-salla-mint border-0 flex-shrink-0" style="padding: 10px 22px;">
+                        <span>بحث</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Clean Feed Header with Collapsible Filter Toolbar -->
+<div class="card bg-white border-0 shadow-xs rounded-4 p-3 mb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
+                المعروض في الحرم الجامعي
+            </h5>
+            <span class="text-muted small">@Model.listings.totalCount مادة دراسية متاحة حالياً</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            @if (hasActiveFilter)
+            {
+                <a asp-action="Index" class="btn btn-sm btn-light border text-danger rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.78rem;">
+                    مسح التصفية ✕
+                </a>
+            }
+
+            <!-- Filter Trigger Button -->
+            <button class="btn btn-sm @(filter.universityId.HasValue || filter.type.HasValue ? "btn-primary-custom" : "btn-salla-outline") rounded-pill px-3 py-1 d-inline-flex align-items-center gap-2"
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#filterDrawer" 
+                    aria-expanded="@(filter.universityId.HasValue || filter.type.HasValue ? "true" : "false")"
+                    aria-controls="filterDrawer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>تصفية النتائج</span>
+                @if (filter.universityId.HasValue || filter.type.HasValue)
+                {
+                    <span class="badge rounded-circle bg-white text-dark" style="width: 18px; height: 18px; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center;">•</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden Filter Drawer (University & Category Selectors) -->
+    <div class="collapse @(filter.universityId.HasValue || filter.type.HasValue ? "show" : "") mt-3 pt-3 border-top" id="filterDrawer">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            @if (!string.IsNullOrWhiteSpace(filter.searchTerm))
+            {
+                <input type="hidden" name="searchTerm" value="@filter.searchTerm" />
+            }
+
+            <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-muted mb-1">الجامعة أو الحرم الجامعي:</label>
+                <select name="universityId" class="form-select rounded-3 text-dark" style="font-size: 0.88rem;">
+                    <option value="">كافة الجامعات</option>
+                    @foreach (var uni in Model.universities)
+                    {
+                        <option value="@uni.id" selected="@(filter.universityId == uni.id)">@uni.name (@uni.city)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">نوع المعروض:</label>
+                <select name="type" class="form-select rounded-3 text-dark" style="font-size: 0.88rem;">
+                    <option value="">كافة الأنواع</option>
+                    <option value="@ListingType.ForSale" selected="@(filter.type == ListingType.ForSale)">معروض للبيع</option>
+                    <option value="@ListingType.Donation" selected="@(filter.type == ListingType.Donation)">تبرع وإعارة مجانية</option>
+                    <option value="@ListingType.Request" selected="@(filter.type == ListingType.Request)">لوحة مطلوب</option>
+                    <option value="@ListingType.CourseBundle" selected="@(filter.type == ListingType.CourseBundle)">حزم المقررات الدراسية</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-grid">
+                <button type="submit" class="btn-salla-mint py-2">
+                    تطبيق
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. Listings Grid -->
+@if (Model.listings.items.Count > 0)
+{
+    <div class="row g-2 g-md-3">
+        @foreach (var listing in Model.listings.items)
+        {
+            <partial name="_ListingCardPartial" model="listing" />
+        }
+    </div>
+
+    <!-- Minimal Pagination -->
+    @if (Model.listings.totalPages > 1)
+    {
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-4 pt-2">
+            @if (Model.listings.hasPreviousPage)
+            {
+                <a asp-action="Index" 
+                   asp-route-page="@(Model.listings.page - 1)" 
+                   asp-route-universityId="@filter.universityId" 
+                   asp-route-type="@filter.type" 
+                   asp-route-searchTerm="@filter.searchTerm"
+                   class="btn-salla-outline px-4">
+                    السابق
+                </a>
+            }
+
+            <span class="px-3 py-2 text-muted fw-semibold" style="font-size: 0.85rem;">
+                صفحة @Model.listings.page من @Model.listings.totalPages
+            </span>
+
+            @if (Model.listings.hasNextPage)
+            {
+                <a asp-action="Index" 
+                   asp-route-page="@(Model.listings.page + 1)" 
+                   asp-route-universityId="@filter.universityId" 
+                   asp-route-type="@filter.type" 
+                   asp-route-searchTerm="@filter.searchTerm"
+                   class="btn-salla-primary px-4">
+                    التالي
+                </a>
+            }
+        </div>
+    }
+}
+else
+{
+    <!-- Minimal Clean Empty State -->
+    <div class="text-center py-5 my-4 bg-white rounded-4 border p-4 shadow-xs">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 68px; height: 68px; background: var(--brand-alabaster);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9695a3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </div>
+        <h5 class="fw-bold mb-1 text-dark">لا توجد نتائج مطابقة لبحثك</h5>
+        <p class="text-muted small mb-3">جرّب البحث بكلمات أخرى أو إعادة ضبط خيارات التصفية.</p>
+        @if (hasActiveFilter)
+        {
+            <a asp-action="Index" class="btn-salla-outline px-3">
+                عرض كافة المعروضات
+            </a>
+        }
+    </div>
+}

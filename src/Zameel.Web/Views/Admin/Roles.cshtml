@@ -1,0 +1,185 @@
+@model List<RoleDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة الأدوار والصلاحيات (RBAC)";
+    var permissions = ViewBag.Permissions as List<PermissionDto> ?? new List<PermissionDto>();
+    var permissionsByModule = permissions.GroupBy(p => p.module).ToList();
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">إدارة الأدوار وصلاحيات النظام 🛡️</h5>
+            <p class="text-muted small mb-0">إنشاء أدوار مخصصة وتحديد صلاحيات الوصول الدقيقة لمشرفي ومستخدمي المنصة.</p>
+        </div>
+        <button class="btn btn-sm btn-salla-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            + إنشاء دور جديد
+        </button>
+    </div>
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="row g-3">
+            @foreach (var role in Model)
+            {
+                <div class="col-12 col-md-6">
+                    <div class="border rounded-4 p-3 bg-light h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h6 class="fw-bold mb-0 text-dark">
+                                    @role.name
+                                    @if (role.isSystemRole)
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0 ms-1" style="font-size: 0.65rem;">
+                                            دور نظام أساسي
+                                        </span>
+                                    }
+                                </h6>
+                                <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">
+                                    المستخدمين: @role.usersCount
+                                </span>
+                            </div>
+                            <div class="text-muted small mb-3">
+                                @(role.description ?? "لا يوجد وصف لهذا الدور")
+                                <div class="font-monospace text-secondary" style="font-size: 0.72rem;">@role.normalizedName</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="fw-bold small d-block mb-1 text-dark">الصلاحيات الممنوحة (@role.permissions.Count):</span>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if (role.normalizedName == "ADMIN")
+                                    {
+                                        <span class="badge bg-danger text-white rounded-pill px-2 py-1 small">
+                                            ★ كامل الصلاحيات دون قيود (Super Admin)
+                                        </span>
+                                    }
+                                    else if (role.permissions.Count > 0)
+                                    {
+                                        @foreach (var perm in role.permissions)
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                                @perm
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">لا توجد صلاحيات إدارية لهذا الدور (صلاحيات القراءة الافتراضية).</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (role.normalizedName != "ADMIN")
+                        {
+                            <div class="pt-2 border-top text-end">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#editRoleModal-@role.id">
+                                    تعديل الصلاحيات ⚙
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Edit Role Permissions Modal -->
+                @if (role.normalizedName != "ADMIN")
+                {
+                    <div class="modal fade" id="editRoleModal-@role.id" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <form method="post" action="/Admin/UpdateRolePermissions">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="roleId" value="@role.id" />
+                                    <div class="modal-header border-bottom">
+                                        <h6 class="modal-title fw-bold text-dark">تعديل صلاحيات الدور: @role.name</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @foreach (var group in permissionsByModule)
+                                        {
+                                            <div class="mb-3">
+                                                <h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">وحدة: @group.Key</h6>
+                                                <div class="row g-2">
+                                                    @foreach (var p in group)
+                                                    {
+                                                        bool isChecked = role.permissions.Contains(p.systemName);
+                                                        <div class="col-12 col-md-6">
+                                                            <div class="form-check p-2 bg-light rounded-3 border">
+                                                                <input class="form-check-input ms-2" type="checkbox" name="permissionIds" value="@p.id" id="perm-@(role.id)-@(p.id)" @(isChecked ? "checked" : "") />
+                                                                <label class="form-check-label small" for="perm-@(role.id)-@(p.id)">
+                                                                    <span class="fw-bold d-block text-dark">@p.displayName</span>
+                                                                    <span class="text-muted" style="font-size: 0.72rem;">@p.systemName</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="modal-footer border-top">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                                        <button type="submit" class="btn btn-sm btn-salla-primary rounded-pill px-4">حفظ التغييرات</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+<!-- Create New Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form method="post" action="/Admin/CreateRole">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold text-dark">+ إنشاء دور جديد في المنصة</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold">اسم الدور <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-sm" placeholder="مثلاً: مشرف كلية الهندسة" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold">وصف الدور</label>
+                            <input type="text" name="description" class="form-control form-control-sm" placeholder="اختصاصات ومسؤوليات هذا الدور" />
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">الصلاحيات المتاحة للدور:</h6>
+                    @foreach (var group in permissionsByModule)
+                    {
+                        <div class="mb-3">
+                            <span class="badge bg-secondary-subtle text-secondary mb-2">وحدة: @group.Key</span>
+                            <div class="row g-2">
+                                @foreach (var p in group)
+                                {
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check p-2 bg-light rounded-3 border">
+                                            <input class="form-check-input ms-2" type="checkbox" name="permissionIds" value="@p.id" id="new-perm-@(p.id)" />
+                                            <label class="form-check-label small" for="new-perm-@(p.id)">
+                                                <span class="fw-bold d-block text-dark">@p.displayName</span>
+                                                <span class="text-muted" style="font-size: 0.72rem;">@p.description</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-sm btn-salla-primary rounded-pill px-4">إنشاء الدور</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

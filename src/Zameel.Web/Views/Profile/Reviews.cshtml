@@ -1,0 +1,86 @@
+@model List<ReviewItemDto>
+@{
+    ViewData["Title"] = "تقييمات الزملاء";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-7">
+        <!-- Back Navigation & Title -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <a asp-action="Index" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center gap-1 text-decoration-none shadow-xs">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>الملف الشخصي</span>
+                </a>
+                <h5 class="fw-bold m-0" style="color: var(--salla-primary);">تقييمات الزملاء</h5>
+            </div>
+            <span class="badge rounded-pill px-3 py-2 text-white" style="background-color: var(--salla-primary); font-size: 0.75rem;">
+                @(Model?.Count ?? 0) تقييم
+            </span>
+        </div>
+
+        @if (Model == null || Model.Count == 0)
+        {
+            <!-- Empty State -->
+            <div class="card salla-card p-4 text-center border-0 shadow-sm my-4">
+                <div class="mb-3">
+                    <span class="fs-1">⭐</span>
+                </div>
+                <h6 class="fw-bold mb-1" style="color: var(--salla-primary);">لا توجد تقييمات حتى الآن</h6>
+                <p class="text-muted small mb-3">
+                    عند إتمام صفقاتك واستلام زملائك للأغراض من المكتبات الجامعية المعتمدة، ستظهر تقييماتهم هنا لتعزيز موثوقيتك الأكاديمية.
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="btn-salla-mint px-4 py-2 text-decoration-none rounded-pill align-self-center shadow-xs">
+                    تصفح السوق الجامعي
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var review in Model)
+                {
+                    <div class="card salla-card p-3 shadow-xs border-0">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs"
+                                     style="width: 38px; height: 38px; background-color: var(--salla-primary); font-size: 0.95rem;">
+                                    @(string.IsNullOrEmpty(review.reviewerName) ? "ز" : review.reviewerName.Substring(0, 1))
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold m-0 small" style="color: var(--salla-primary);">@review.reviewerName</h6>
+                                    <span class="text-muted" style="font-size: 0.72rem;">@review.createdAt.ToString("yyyy/MM/dd")</span>
+                                </div>
+                            </div>
+
+                            <!-- Star Rating -->
+                            <div class="d-flex align-items-center gap-1 text-warning" style="font-size: 0.9rem;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= review.rating)
+                                    {
+                                        <span>★</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted opacity-50">☆</span>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(review.comment))
+                        {
+                            <p class="mb-0 text-secondary small bg-light p-2 rounded-3 border-0" style="font-size: 0.82rem; line-height: 1.5;">
+                                @review.comment
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

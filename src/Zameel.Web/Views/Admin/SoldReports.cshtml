@@ -1,0 +1,95 @@
+@model List<SoldReportItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "طابور بلاغات المستلزمات المباعة";
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">إعلانات أبلغ المشترون أنها مباعة 📢</h5>
+            <p class="text-muted small mb-0">عندما يتواصل طالب مع البائع ويخبره بالبيع، يضغط زر "أبلغني البائع أنها مباعة". الإعلانات هنا تحول فوراً لـ "مباع" لتفريغ كوتا البائع وحماية وقت بقية الطلاب.</p>
+        </div>
+        <span class="badge bg-danger px-3 py-2 rounded-pill fw-bold">
+            @Model.Count إعلان عليه بلاغات
+        </span>
+    </div>
+
+    @if (Model.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>عنوان المستلزم</th>
+                        <th>السعر</th>
+                        <th>بيانات البائع</th>
+                        <th>عدد البلاغات</th>
+                        <th>الطلاب المُبلِغون</th>
+                        <th>تاريخ النشر</th>
+                        <th class="text-center">إجراء المشرف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/Listings/Details/@item.listingId" target="_blank" class="fw-bold text-dark text-decoration-none hover-primary">
+                                    @item.title ↗
+                                </a>
+                            </td>
+                            <td>
+                                <span class="fw-bold" style="color: var(--salla-primary);">@item.price.ToString("N0") ريال يمني</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@item.sellerName</div>
+                                <div class="text-muted small">@item.sellerEmail</div>
+                            </td>
+                            <td>
+                                <span class="badge @(item.reportedSoldCount >= 2 ? "bg-danger" : "bg-warning text-dark") px-2 py-1 rounded-pill">
+                                    @item.reportedSoldCount بلاغات
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-muted small text-truncate" style="max-width: 180px;" title="@string.Join(", ", item.reportersNames)">
+                                    @(item.reportersNames.Count > 0 ? string.Join(", ", item.reportersNames) : "غير مسجلين")
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted small">@item.createdAt.ToString("yyyy/MM/dd")</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <form method="post" action="/Admin/ConfirmSold" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@item.listingId" />
+                                        <button type="submit" class="btn btn-sm btn-danger px-3" onclick="return confirm('هل تريد تأكيد إتمام البيع وتحويل الإعلان إلى حالة مباع وتفريغ كوتا البائع؟')">
+                                            ✓ تأكيد البيع وإغلاق الإعلان
+                                        </button>
+                                    </form>
+
+                                    <form method="post" action="/Admin/DismissSoldReports" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@item.listingId" />
+                                        <button type="submit" class="btn btn-sm btn-light border px-2">
+                                            تجاهل البلاغات
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div style="font-size: 3rem; margin-bottom: 8px;">✨</div>
+            <h6 class="fw-bold" style="color: var(--salla-primary);">السوق الجامعي محدث ودقيق 100%!</h6>
+            <p class="text-muted small">لا توجد أي مستلزمات مُبلغ عن بيعها من قِبل الطلاب حالياً.</p>
+        </div>
+    }
+</div>

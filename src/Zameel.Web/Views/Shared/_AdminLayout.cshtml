@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        var adminTitle = ViewData["Title"]?.ToString()?.Trim();
+        var formattedAdminTitle = string.IsNullOrWhiteSpace(adminTitle) 
+            ? "لوحة تحكم زميل" 
+            : $"{adminTitle.Replace(" - لوحة تحكم إدارة زميل", "").Replace(" - زميل", "").Trim()} | لوحة إدارة زميل";
+    }
+    <title>@formattedAdminTitle</title>
+
+    <!-- Favicon & Brand Icons -->
+    <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/images/favicon-32x32.png" asp-append-version="true" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/images/favicon-16x16.png" asp-append-version="true" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/images/zameel-brand-icon.png" asp-append-version="true" />
+
+    <!-- Fonts: Readex Pro + Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS: Bootstrap RTL + Zameel Brand Design System -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        .admin-sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--brand-midnight) 0%, #0d0b1d 100%);
+            color: #ffffff;
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 1040;
+            transition: all 0.3s ease;
+            box-shadow: -4px 0 24px rgba(19, 17, 43, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .admin-main {
+            margin-right: 260px;
+            min-height: 100vh;
+            background-color: var(--brand-alabaster);
+            padding-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.88rem;
+            
+            border-radius: var(--radius-md);
+            margin: 3px 12px;
+            transition: all 0.2s ease;
+        }
+
+        .admin-nav-link svg {
+            transition: transform 0.2s ease, stroke 0.2s ease;
+        }
+
+        .admin-nav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .admin-nav-link:hover svg {
+            transform: scale(1.1);
+        }
+
+        .admin-nav-link.active {
+            color: var(--brand-midnight);
+            background: var(--brand-mint);
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(0, 229, 163, 0.35);
+        }
+
+        .admin-nav-link.active svg {
+            stroke: var(--brand-midnight);
+        }
+
+        .admin-topbar {
+            height: 64px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: 0 2px 10px rgba(19, 17, 43, 0.03);
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 12px 28px -6px rgba(19, 17, 43, 0.08);
+            transform: translateY(-3px);
+            border-color: rgba(0, 229, 163, 0.3);
+        }
+
+        .kpi-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Live status pulsing dot */
+        @@keyframes pulseEmerald {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(0, 229, 163, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 6px rgba(0, 229, 163, 0);
+            }
+        }
+
+        .campus-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--brand-mint);
+            animation: pulseEmerald 2s infinite;
+        }
+
+        /* Mobile Sidebar adjustments */
+        @@media (max-width: 991px) {
+            .admin-sidebar {
+                transform: translateX(100%);
+            }
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+            .admin-main {
+                margin-right: 0;
+            }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Midnight Obsidian Admin Sidebar -->
+    <aside class="admin-sidebar d-flex flex-column" id="adminSidebar">
+        <!-- Brand Header -->
+        <div class="px-4 py-3 border-bottom border-white border-opacity-10 d-flex align-items-center justify-content-between">
+            <a href="/Admin" class="salla-brand text-white text-decoration-none">
+                <img src="~/images/zameel-brand-icon.png" alt="شعار زميل" class="brand-icon-img" />
+                <span>زميل</span>
+                <span class="badge rounded-pill px-2 py-0 ms-1" style="background: rgba(0, 229, 163, 0.15); color: var(--brand-mint); font-size: 0.68rem; font-weight: 600;">مركز القيادة</span>
+            </a>
+            <button class="btn btn-sm text-white-50 d-lg-none" onclick="toggleSidebar()">✕</button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-grow-1 py-3 overflow-auto">
+            <a href="/Admin" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>المؤشرات والإحصائيات</span>
+            </a>
+
+            <a href="/Admin/Verifications" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Verifications" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+                <span>توثيق القيد الأكاديمي</span>
+            </a>
+
+            <a href="/Admin/Listings" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Listings" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                    <polyline points="10 6 14 10 10 14"></polyline>
+                </svg>
+                <span>المستلزمات المعروضة</span>
+            </a>
+
+            <a href="/Admin/SoldReports" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "SoldReports" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+                <span>بلاغات المستلزمات المباعة</span>
+            </a>
+
+            <a href="/Admin/Universities" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Universities" || ViewContext.RouteData.Values["action"]?.ToString() == "UniversityDetails" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"></path>
+                    <path d="M3 10h18"></path>
+                    <path d="M5 6l7-3 7 3"></path>
+                    <path d="M4 10v11"></path>
+                    <path d="M20 10v11"></path>
+                    <path d="M8 14v4"></path>
+                    <path d="M12 14v4"></path>
+                    <path d="M16 14v4"></path>
+                </svg>
+                <span>دليل الجامعات</span>
+            </a>
+
+            <a href="/Admin/Faculties" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Faculties" || ViewContext.RouteData.Values["action"]?.ToString() == "FacultyDetails" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+                <span>الكليات والتخصصات</span>
+            </a>
+
+            <a href="/Admin/Stores" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Stores" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path>
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path>
+                    <path d="M2 7h20"></path>
+                </svg>
+                <span>المكتبات والخدمات الجامعية</span>
+            </a>
+
+            <a href="/Admin/Users" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>الطلاب والمستخدمين</span>
+            </a>
+
+            <a href="/Admin/Moderation" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Moderation" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 14 14"></polyline>
+                </svg>
+                <span>مراجعة الإعلانات ⏳</span>
+            </a>
+
+            <a href="/Admin/Roles" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Roles" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>الأدوار والصلاحيات 🛡️</span>
+            </a>
+
+            <a href="/Admin/Plans" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Plans" ? "active" : "")">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>باقات الاشتراك 📦</span>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-3 border-top border-white border-opacity-10">
+            <a href="/" class="btn-salla-outline w-100 justify-content-center text-white bg-white bg-opacity-10 border-0 d-flex align-items-center gap-2" style="font-size: 0.84rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                <span>عرض المنصة العامة</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="admin-main">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-light border d-lg-none" onclick="toggleSidebar()">
+                    ☰ القائمة
+                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <h6 class="mb-0 fw-bold" style="color: var(--brand-midnight); ">@ViewData["Title"]</h6>
+                </div>
+            </div>
+
+            <!-- Topbar Right Status & Actions -->
+            <div class="d-flex align-items-center gap-3">
+                <!-- Campus Pulse Pill -->
+                <div class="d-none d-sm-flex align-items-center gap-2 px-3 py-1 rounded-pill border bg-light" style="font-size: 0.76rem;">
+                    <span class="campus-pulse-dot"></span>
+                    <span class="text-muted">الحرم الجامعي نشط • النظام متصل</span>
+                </div>
+
+                <!-- Admin Profile Pill -->
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-xs" 
+                         style="width: 36px; height: 36px; background: var(--brand-midnight); font-size: 0.85rem;">
+                        @(User.Identity?.Name?.Substring(0, 1) ?? "م")
+                    </div>
+                    <span class="d-none d-md-inline fw-semibold text-dark small">@User.Identity?.Name</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Body Container -->
+        <div class="container-fluid p-3 p-md-4">
+            <!-- Alert Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show rounded-3 py-2 px-3 mb-4 shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>@TempData["SuccessMessage"]</span>
+                    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show rounded-3 py-2 px-3 mb-4 shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>@TempData["ErrorMessage"]</span>
+                    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('adminSidebar').classList.toggle('show');
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,132 @@
+@model List<AdminListingItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "مراجعة واعتماد الإعلانات والطلبات";
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">قائمة الإعلانات والطلبات بانتظار الاعتماد ⏳</h5>
+            <p class="text-muted small mb-0">مراجعة محتوى السلع والمستلزمات قبل نشرها وإتاحتها لكافة طلاب الحرم الجامعي.</p>
+        </div>
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
+            قيد الانتظار: @(Model?.Count ?? 0)
+        </span>
+    </div>
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>عنوان المستلزم</th>
+                        <th>صاحب الإعلان</th>
+                        <th>الجامعة / الكلية</th>
+                        <th>السعر</th>
+                        <th>النوع</th>
+                        <th>الحالة الحالية</th>
+                        <th>تاريخ الإضافة</th>
+                        <th class="text-center" style="min-width: 180px;">الإجراء الرقابي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@item.title</div>
+                                <a href="/listings/details/@item.id" target="_blank" class="small text-decoration-none" style="color: var(--salla-primary); font-size: 0.75rem;">
+                                    معاينة تفاصيل الإعلان ↗
+                                </a>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@item.sellerName</div>
+                            </td>
+                            <td>
+                                <div>@item.universityName</div>
+                                <div class="text-muted small">@(item.facultyName ?? "-")</div>
+                            </td>
+                            <td>
+                                @if (item.type == ListingType.Donation)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">إهداء مجاني</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold" style="color: var(--salla-primary);">@(((long)item.price).ToString("N0"))</span>
+                                    <span class="small text-muted">ريال يمني</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.type)
+                                {
+                                    case ListingType.ForSale:
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">للبيع</span>
+                                        break;
+                                    case ListingType.Request:
+                                        <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-2 py-1">مطلوب</span>
+                                        break;
+                                    case ListingType.Donation:
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">إهداء مجاني</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-light text-muted border rounded-pill px-2 py-1">@item.type</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (item.status == ListingStatus.PendingApproval)
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1">بانتظار المشرف</span>
+                                }
+                                else if (item.status == ListingStatus.PendingConfirmation)
+                                {
+                                    <span class="badge bg-info text-dark rounded-pill px-2 py-1">بانتظار إيداع المكتبة</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-pill px-2 py-1">@item.status</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="text-muted small">@item.createdAt.ToString("yyyy/MM/dd HH:mm")</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <!-- Approve Form -->
+                                    <form method="post" action="/Admin/ApproveListing" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@item.id" />
+                                        <button type="submit" class="btn btn-sm btn-success px-3 py-1 rounded-pill" style="font-size: 0.78rem;">
+                                            ✓ اعتماد ونشر
+                                        </button>
+                                    </form>
+
+                                    <!-- Reject Form -->
+                                    <form method="post" action="/Admin/RejectListing" class="d-inline" onsubmit="return confirm('هل أنت متأكد من رفض هذا الإعلان؟');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@item.id" />
+                                        <input type="hidden" name="reason" value="مخالف لشروط النشر الجامعي" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-1 rounded-pill" style="font-size: 0.78rem;">
+                                            ✕ رفض
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <span style="font-size: 3rem;">🎉</span>
+            <h6 class="fw-bold mt-2 text-dark">رائع! طابور المراجعة فارغ تماماً</h6>
+            <p class="text-muted small mb-0">تمت مراجعة واعتماد كافة الإعلانات والطلبات الجامعية بنجاح.</p>
+        </div>
+    }
+</div>

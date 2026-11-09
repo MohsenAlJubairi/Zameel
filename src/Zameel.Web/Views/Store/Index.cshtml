@@ -1,0 +1,315 @@
+@model StoreDashboardDto
+@{
+    ViewData["Title"] = "لوحة إدارة المكتبة";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+                ✅ @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+                ⚠️ @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- 1. Store Hero Banner (Salla B2B Showcase) -->
+        <div class="card salla-card p-3 mb-3 border-0 shadow-sm"
+             style="background: linear-gradient(135deg, #ffffff 0%, var(--brand-mint-soft) 100%); border: 1px solid rgba(0, 229, 163, 0.3) !important;">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-xs text-white flex-shrink-0"
+                         style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--brand-midnight) 0%, #1e1b40 100%); font-size: 1.8rem;">
+                        🏪
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                            <h4 class="fw-bold mb-0 text-dark">@Model.storeName</h4>
+                            @if (Model.isApproved)
+                            {
+                                <span class="badge rounded-pill badge-cyan-verified px-2 py-1" style="font-size: 0.72rem;">مكتبة معتمدة رسمياً ✓</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-subtle text-dark rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                    بانتظار الاعتماد
+                                </span>
+                            }
+                        </div>
+                        <p class="text-muted small mb-1">
+                            @(Model.description ?? "تصوير ملازم جامعية، بيع الأدوات والمقررات الدراسية.")
+                        </p>
+                        <div class="d-flex align-items-center gap-3 text-muted small flex-wrap" style="font-size: 0.8rem;">
+                            <span>🏛️ @(Model.universityName ?? "كافة الجامعات") @(!string.IsNullOrEmpty(Model.facultyName) ? $"• {Model.facultyName}" : "")</span>
+                            <span>📍 @(Model.locationDescription ?? "الحرم الجامعي")</span>
+                            <span>👤 المدير: @Model.ownerName</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column align-items-md-end gap-2 flex-shrink-0">
+                    <a asp-controller="Listings" asp-action="Create" class="btn-salla-mint px-3 py-2 text-decoration-none shadow-xs">
+                        <span>➕ إضافة ملزمة أو مستلزم جديد</span>
+                    </a>
+                    <span class="badge bg-white border text-muted px-2 py-1 rounded-pill" style="font-size: 0.72rem;">
+                        📅 صلاحية الاشتراك: @Model.subscriptionExpiresAt.ToString("yyyy/MM/dd")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Store KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4">
+                <div class="card salla-card p-3 shadow-sm text-center">
+                    <span class="text-muted small fw-semibold d-block mb-1">الملازم والمستلزمات المعروضة</span>
+                    <h3 class="fw-bold mb-0" style="color: var(--salla-primary);">@Model.totalListingsCount</h3>
+                    <span class="text-muted" style="font-size: 0.72rem;">حزمة ومقرر نشط</span>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4">
+                <div class="card salla-card p-3 shadow-sm text-center">
+                    <span class="text-muted small fw-semibold d-block mb-1">إجمالي مشاهدات الطلاب</span>
+                    <h3 class="fw-bold mb-0 text-success">@Model.totalViews</h3>
+                    <span class="text-muted" style="font-size: 0.72rem;">تفاعل عبر السوق الجامعي</span>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card salla-card p-3 shadow-sm text-center">
+                    <span class="text-muted small fw-semibold d-block mb-1">كوتا حساب المكتبة</span>
+                    <h3 class="fw-bold mb-0" style="color: var(--salla-mint);">غير محدودة ∞</h3>
+                    <span class="text-muted" style="font-size: 0.72rem;">اشتراك شريك أكاديمي معتمد</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Edit Store Details Accordion / Form -->
+        <div class="card salla-card p-3 mb-3 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5">✏️</span>
+                    <h6 class="fw-bold m-0" style="color: var(--salla-primary);">تحديث بيانات وموقع المكتبة داخل الحرم</h6>
+                </div>
+            </div>
+
+            <form asp-action="Update" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold" style="color: var(--salla-primary);">اسم المكتبة التجاري <span class="text-danger">*</span></label>
+                    <input type="text" name="storeName" value="@Model.storeName" class="form-control rounded-3" required />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold" style="color: var(--salla-primary);">الموقع الجغرافي داخل الحرم الجامعي</label>
+                    <input type="text" name="locationDescription" value="@Model.locationDescription" class="form-control rounded-3" placeholder="مثال: أمام بوابة كلية الهندسة الرئيسية" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold" style="color: var(--salla-primary);">وصف الخدمات وتوفر الملازم</label>
+                    <textarea name="description" class="form-control rounded-3" rows="2" placeholder="تصوير ملازم، طباعة أبحاث، أدوات ومقررات...">@Model.description</textarea>
+                </div>
+
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn-salla-mint px-4 py-2 shadow-xs">
+                        <span>حفظ التعديلات</span>
+                        <span>✓</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. Student Drop-off Requests (الأمانات والطرود بانتظار التأكيد) -->
+        <div class="card salla-card p-3 mb-3 shadow-sm" style="border: 2px solid @(Model.pendingDropoffs.Count > 0 ? "var(--brand-mint)" : "var(--border-color)") !important;">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">📦</span>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-bold m-0" style="color: var(--brand-midnight);">أمانات وطرود الطلاب بانتظار التأكيد</h5>
+                            @if (Model.pendingDropoffs.Count > 0)
+                            {
+                                <span class="badge rounded-pill bg-danger text-white px-2 py-1" style="font-size: 0.75rem;">
+                                    @Model.pendingDropoffs.Count مستلزم بانتظار الفحص
+                                </span>
+                            }
+                        </div>
+                        <span class="text-muted small">مستلزمات دراسية أودعها الطلاب بمكتبتك كنقطة استلام معتمدة، يرجى تأكيد استلامها لتظهر في السوق.</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.pendingDropoffs.Count > 0)
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var drop in Model.pendingDropoffs)
+                    {
+                        <div class="p-3 rounded-4 bg-light border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-xs">
+                            <!-- Left: Item & Student Info -->
+                            <div class="d-flex align-items-center gap-3">
+                                @if (!string.IsNullOrEmpty(drop.primaryImageUrl))
+                                {
+                                    <img src="@drop.primaryImageUrl" class="rounded-3 border flex-shrink-0" style="width: 64px; height: 64px; object-fit: cover;" alt="@drop.title" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-3 border d-flex align-items-center justify-content-center flex-shrink-0 p-1" style="width: 64px; height: 64px; background: rgba(19, 17, 43, 0.03);">
+                                        <img src="~/images/zameel-brand-icon.png" style="width: 40px; height: 40px; object-fit: contain;" alt="شعار زميل" />
+                                    </div>
+                                }
+
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-dark">@drop.title</h6>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap text-muted small mb-1" style="font-size: 0.78rem;">
+                                        <span>💰 السعر: <strong class="text-dark">@(drop.price > 0 ? $"{drop.price:N0} ريال" : "مجاني")</strong></span>
+                                        <span>•</span>
+                                        <span>👤 الطالب: <strong class="text-dark">@drop.sellerName</strong></span>
+                                        @if (!string.IsNullOrEmpty(drop.sellerPhone))
+                                        {
+                                            <span>•</span>
+                                            <span>📞 @drop.sellerPhone</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(drop.sellerRegNo))
+                                        {
+                                            <span>•</span>
+                                            <span class="badge bg-white border text-primary font-monospace">قيد: @drop.sellerRegNo</span>
+                                        }
+                                    </div>
+                                    <div class="text-muted small" style="font-size: 0.74rem;">
+                                        🏛️ @drop.universityName @(!string.IsNullOrEmpty(drop.facultyName) ? $"• {drop.facultyName}" : "")
+                                        <span class="ms-2">📅 @drop.createdAt.ToString("yyyy/MM/dd HH:mm")</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Approve / Reject Actions -->
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                <form asp-action="ApproveDropoff" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="listingId" value="@drop.listingId" />
+                                    <button type="submit" class="btn-salla-mint px-3 py-2 fs-6 shadow-xs" title="تأكيد استلام وفحص السلعة ونشرها في السوق للطلاب">
+                                        <span>✓ تأكيد الاستلام ونشر السلعة</span>
+                                    </button>
+                                </form>
+
+                                <form asp-action="RejectDropoff" method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من رفض هذا المستلزم لعدم استلامه أو عدم مطابقته؟');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="listingId" value="@drop.listingId" />
+                                    <input type="hidden" name="reason" value="عدم مطابقة أو عدم استلام السلعة شخصياً" />
+                                    <button type="submit" class="btn btn-outline-danger rounded-pill px-3 py-2 small fw-semibold" title="رفض في حال عدم إيداع الطالب للسلعة">
+                                        <span>✕ رفض / غير مستلمة</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-3 text-muted">
+                    <span class="fs-2 d-block mb-1">✅</span>
+                    <span class="small fw-semibold">لا توجد أمانات أو طرود معلقة بانتظار التأكيد حالياً.</span>
+                </div>
+            }
+        </div>
+
+        <!-- 5. Active Hosted Student Items (السلع المودعة بالمكتبة والمتاحة حالياً) -->
+        <div class="card salla-card p-3 mb-3 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🏛️</span>
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--brand-midnight);">السلع المودعة بالمكتبة والمتاحة حالياً للطلاب (@Model.hostedStudentListings.Count)</h5>
+                        <span class="text-muted small">هذه المستلزمات تم تأكيد استلامها وتتواجد حالياً في مكتبتك بانتظار قدوم المشتري لاستلامها.</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.hostedStudentListings.Count > 0)
+            {
+                <div class="row g-2 g-md-3">
+                    @foreach (var hosted in Model.hostedStudentListings)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="p-3 rounded-4 bg-light border d-flex align-items-center justify-content-between gap-2 shadow-xs h-100">
+                                <div class="d-flex align-items-center gap-2 text-truncate">
+                                    @if (!string.IsNullOrEmpty(hosted.primaryImageUrl))
+                                    {
+                                        <img src="@hosted.primaryImageUrl" class="rounded-3 border flex-shrink-0" style="width: 48px; height: 48px; object-fit: cover;" alt="@hosted.title" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-3 border d-flex align-items-center justify-content-center flex-shrink-0 p-1" style="width: 48px; height: 48px; background: rgba(19, 17, 43, 0.03);">
+                                            <img src="~/images/zameel-brand-icon.png" style="width: 32px; height: 32px; object-fit: contain;" alt="شعار زميل" />
+                                        </div>
+                                    }
+                                    <div class="text-truncate">
+                                        <a asp-controller="Listings" asp-action="Details" asp-route-id="@hosted.id" class="fw-bold text-dark text-decoration-none small text-truncate d-block">
+                                            @hosted.title
+                                        </a>
+                                        <div class="text-muted small" style="font-size: 0.72rem;">
+                                            <span>بائع: @hosted.sellerName</span>
+                                            <span class="ms-1 fw-bold text-success">@(hosted.price > 0 ? $"{hosted.price:N0} ريال" : "مجاني")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success-subtle text-success border rounded-pill px-2 py-1 flex-shrink-0" style="font-size: 0.7rem;">
+                                    جاهز للاستلام
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-3 text-muted">
+                    <span class="small">لا توجد سلع مودعة من الطلاب ومفعلة حالياً.</span>
+                </div>
+            }
+        </div>
+
+        <!-- 6. Store Listings Grid -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h5 class="fw-bold mb-1 text-dark">📦 معروضات وملازم المكتبة (@Model.myListings.Count)</h5>
+                <p class="text-muted small mb-0">جميع المواد والكتب والملازم المعروضة للطلاب باسم مكتبتك.</p>
+            </div>
+            <a asp-controller="Listings" asp-action="Create" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold text-decoration-none">
+                ➕ نشر مستلزم جديد
+            </a>
+        </div>
+
+        @if (Model.myListings.Count > 0)
+        {
+            <div class="row g-2 g-md-3">
+                @foreach (var listing in Model.myListings)
+                {
+                    <partial name="_ListingCardPartial" model="listing" />
+                }
+            </div>
+        }
+        else
+        {
+            <div class="card salla-card text-center py-3 px-3 shadow-xs">
+                <div style="font-size: 3rem; margin-bottom: 8px;">📚</div>
+                <h6 class="fw-bold" style="color: var(--salla-primary);">لم تنشر أي ملازم أو مستلزمات بعد</h6>
+                <p class="text-muted small mb-3">أضف ملازم ومقررات كليتك لتمكين الطلاب من العثور عليها وحجزها بسهولة.</p>
+                <div>
+                    <a asp-controller="Listings" asp-action="Create" class="btn-salla-mint px-4 py-2 text-decoration-none shadow-xs">
+                        <span>➕ نشر أول مقرر دراسي</span>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>

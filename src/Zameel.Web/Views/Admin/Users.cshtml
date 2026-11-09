@@ -1,0 +1,190 @@
+@model PagedResult<AdminUserItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة الطلاب والمستخدمين";
+    string? currentSearch = ViewBag.Search;
+    string? currentRole = ViewBag.Role;
+    var allRoles = ViewBag.Roles as List<RoleDto> ?? new List<RoleDto>();
+    var allPlans = ViewBag.Plans as List<PlanDto> ?? new List<PlanDto>();
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">سجل مستخدمي الحرم الجامعي 👥</h5>
+            <p class="text-muted small mb-0">عرض كافة الطلاب، رتبهم، باقاتهم، إعلاناتهم النشطة، وتعديل صلاحياتهم.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Admin/Roles" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                إدارة الأدوار والصلاحيات 🛡️
+            </a>
+            <a href="/Admin/Plans" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                إدارة الباقات 📦
+            </a>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill align-self-center">
+                إجمالي المستخدمين: @(Model?.totalCount ?? 0)
+            </span>
+        </div>
+    </div>
+
+    <!-- Search & Filter Form -->
+    <form method="get" action="/Admin/Users" class="row g-2 mb-4 bg-light p-3 rounded-3">
+        <div class="col-12 col-md-6">
+            <input type="text" name="search" value="@currentSearch" class="form-control form-control-sm" placeholder="ابحث بالاسم، البريد، أو رقم الهاتف..." />
+        </div>
+
+        <div class="col-12 col-md-3">
+            <select name="role" class="form-select form-select-sm">
+                <option value="">كافة الأدوار</option>
+                @foreach (var r in allRoles)
+                {
+                    <option value="@r.normalizedName" selected="@(currentRole == r.normalizedName)">@r.name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-salla-primary flex-grow-1">بحث</button>
+            <a href="/Admin/Users" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+        </div>
+    </form>
+
+    @if (Model != null && Model.items.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>الاسم الكامل</th>
+                        <th>البريد والهاتف</th>
+                        <th>الجامعة</th>
+                        <th>الرتبة</th>
+                        <th>الباقة</th>
+                        <th>الإعلانات</th>
+                        <th>تاريخ التسجيل</th>
+                        <th class="text-center" style="min-width: 220px;">تعديل الدور والباقة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">
+                                    @u.fullName
+                                    @if (u.isVerified)
+                                    {
+                                        <span class="salla-verified-badge ms-1" title="موثق">✓</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div>@u.email</div>
+                                <div class="text-muted small">@(u.phone ?? "-")</div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-block" style="max-width: 140px;">
+                                    @(u.universityName ?? "غير محدد")
+                                </span>
+                            </td>
+                            <td>
+                                @if (u.roleNormalized == "ADMIN")
+                                {
+                                    <span class="badge bg-danger px-2 py-1 rounded-pill">@u.roleName</span>
+                                }
+                                else if (u.roleNormalized == "MODERATOR")
+                                {
+                                    <span class="badge bg-warning text-dark px-2 py-1 rounded-pill">@u.roleName 🛡️</span>
+                                }
+                                else if (u.roleNormalized == "STUDENT_VERIFIED")
+                                {
+                                    <span class="badge bg-primary px-2 py-1 rounded-pill">@u.roleName (✓)</span>
+                                }
+                                else if (u.roleNormalized == "STORE")
+                                {
+                                    <span class="badge bg-info text-dark px-2 py-1 rounded-pill">@u.roleName 🏪</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border px-2 py-1 rounded-pill">@u.roleName</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                    @(u.planName ?? "الباقة الأساسية")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold" style="color: var(--salla-primary);">@u.activeListingsCount</span>
+                                <span class="text-muted small">نشط</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">@u.createdAt.ToString("yyyy/MM/dd")</span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <!-- Change Role Form -->
+                                    <form method="post" action="/Admin/ChangeRole" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@u.id" />
+                                        <select name="newRoleId" class="form-select form-select-sm" style="font-size: 0.72rem;">
+                                            @foreach (var r in allRoles)
+                                            {
+                                                <option value="@r.id" selected="@(u.roleNormalized == r.normalizedName)">@r.name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-light border py-1 px-2" title="تطبيق الدور" style="font-size: 0.7rem;">
+                                            دور
+                                        </button>
+                                    </form>
+
+                                    <!-- Change Plan Form -->
+                                    <form method="post" action="/Admin/ChangePlan" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@u.id" />
+                                        <select name="planId" class="form-select form-select-sm" style="font-size: 0.72rem;">
+                                            @foreach (var p in allPlans)
+                                            {
+                                                <option value="@p.id" selected="@(u.planName == p.name)">@p.name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="تطبيق الباقة" style="font-size: 0.7rem;">
+                                            باقة
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.totalPages > 1)
+        {
+            <div class="d-flex justify-content-center align-items-center gap-2 mt-4 pt-2 border-top">
+                @if (Model.hasPreviousPage)
+                {
+                    <a href="/Admin/Users?search=@currentSearch&role=@currentRole&page=@(Model.page - 1)" class="btn btn-sm btn-outline-secondary">
+                        السابق
+                    </a>
+                }
+                <span class="small text-muted">صفحة @Model.page من @Model.totalPages</span>
+                @if (Model.hasNextPage)
+                {
+                    <a href="/Admin/Users?search=@currentSearch&role=@currentRole&page=@(Model.page + 1)" class="btn btn-sm btn-outline-secondary">
+                        التالي
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <span style="font-size: 3rem;">🔍</span>
+            <h6 class="fw-bold mt-2 text-muted">لم يتم العثور على أي مستخدمين بالمحددات المدخلة.</h6>
+        </div>
+    }
+</div>

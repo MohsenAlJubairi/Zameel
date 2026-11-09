@@ -1,0 +1,187 @@
+@model List<AdminUniversityItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة الجامعات والمعاهد الأكاديمية";
+}
+
+<!-- Top Header with Actions -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-1" style="color: var(--salla-primary);">🏛️ إدارة الجامعات والمعاهد</h4>
+        <p class="text-muted small mb-0">إدارة دليل الجامعات الأكاديمية المعتمدة، وضبط نطاق الكليات والطلاب المسجلين.</p>
+    </div>
+    <div>
+        <button type="button" class="btn-salla-mint px-4 py-2" data-bs-toggle="modal" data-bs-target="#addUniversityModal">
+            <span>➕</span>
+            <span>إضافة جامعة جديدة</span>
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ✅ @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ⚠️ @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Summary Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">إجمالي الجامعات</span>
+            <h3 class="fw-bold mb-0" style="color: var(--salla-primary);">@Model.Count</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">جامعات نشطة</span>
+            <h3 class="fw-bold mb-0 text-success">@Model.Count(u => u.isActive)</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">إجمالي الكليات المرتبطة</span>
+            <h3 class="fw-bold mb-0 text-primary">@Model.Sum(u => u.facultiesCount)</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">إجمالي الطلاب المسجلين</span>
+            <h3 class="fw-bold mb-0" style="color: var(--salla-purple);">@Model.Sum(u => u.studentsCount)</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Universities Table Card -->
+<div class="admin-table-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>اسم الجامعة</th>
+                    <th>المدينة</th>
+                    <th>الكليات التابعة</th>
+                    <th>الطلاب المقيدين</th>
+                    <th>المعروضات النشطة</th>
+                    <th>الحالة</th>
+                    <th class="text-end">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count > 0)
+                {
+                    @foreach (var uni in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center text-muted fw-bold" 
+                                         style="width: 40px; height: 40px; font-size: 1.1rem;">
+                                        🏛️
+                                    </div>
+                                    <div>
+                                        <a href="/Admin/Universities/@uni.id" class="fw-bold text-dark text-decoration-none hover-primary">
+                                            @uni.name
+                                        </a>
+                                        <div class="text-muted" style="font-size: 0.72rem;">أُضيفت في @uni.createdAt.ToString("yyyy/MM/dd")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1">@uni.city</span>
+                            </td>
+                            <td>
+                                <a href="/Admin/Universities/@uni.id" class="badge rounded-pill text-decoration-none px-2 py-1" style="background-color: var(--salla-primary-light); color: var(--salla-primary);">
+                                    @uni.facultiesCount كليات ↗
+                                </a>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@uni.studentsCount</span> طالب
+                            </td>
+                            <td>
+                                <span class="fw-semibold" style="color: var(--salla-primary);">@uni.listingsCount</span> إعلان
+                            </td>
+                            <td>
+                                @if (uni.isActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">نشطة ✓</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1">معطلة ✕</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-1">
+                                    <a href="/Admin/Universities/@uni.id" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;" title="إدارة الكليات والتخصصات">
+                                        إدارة الكليات 🏛️
+                                    </a>
+
+                                    <form method="post" action="/admin/universities/toggle-status" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@uni.id" />
+                                        <button type="submit" class="btn btn-sm @(uni.isActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                            @(uni.isActive ? "تعطيل" : "تفعيل")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <span class="fs-1 d-block mb-2">🏛️</span>
+                            <span>لا توجد جامعات مسجلة حتى الآن. انقر على "إضافة جامعة جديدة" للبدء.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add University -->
+<div class="modal fade" id="addUniversityModal" tabindex="-1" aria-labelledby="addUniversityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="addUniversityModalLabel" style="color: var(--salla-primary);">➕ إضافة جامعة جديدة</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/admin/universities/add">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اسم الجامعة الرسمي <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control rounded-3" placeholder="مثال: جامعة عدن" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">المدينة أو المحافظة <span class="text-danger">*</span></label>
+                        <input type="text" name="city" class="form-control rounded-3" placeholder="مثال: عدن" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">مسار الشعار (اختياري)</label>
+                        <input type="text" name="logoUrl" class="form-control rounded-3" placeholder="/images/universities/example.webp" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn-salla-mint px-4 py-2">حفظ الجامعة ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

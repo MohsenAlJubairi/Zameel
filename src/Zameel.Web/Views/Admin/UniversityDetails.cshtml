@@ -1,0 +1,249 @@
+@model AdminUniversityDetailDto
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"إدارة كليات {Model.name}";
+}
+
+<!-- Breadcrumb -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <a href="/Admin/Universities" class="btn btn-sm btn-light border rounded-pill px-3">
+            ← العودة لدليل الجامعات
+        </a>
+        <span class="text-muted small">/</span>
+        <span class="fw-bold small" style="color: var(--salla-primary);">@Model.name</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editUniversityModal">
+            ✏️ تعديل بيانات الجامعة
+        </button>
+        <button type="button" class="btn-salla-mint btn-sm px-3" data-bs-toggle="modal" data-bs-target="#linkFacultyModal">
+            ➕ ربط كلية جديدة
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ✅ @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ⚠️ @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- University Info Header Card -->
+<div class="card salla-card p-3 mb-3 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, var(--salla-primary-light) 100%);">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-white border shadow-xs d-flex align-items-center justify-content-center fw-bold" 
+                 style="width: 58px; height: 58px; font-size: 1.6rem; color: var(--salla-primary);">
+                🏛️
+            </div>
+            <div>
+                <h4 class="fw-bold m-0 d-flex align-items-center gap-2">
+                    <span>@Model.name</span>
+                    @if (Model.isActive)
+                    {
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0" style="font-size: 0.7rem;">نشطة ✓</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0" style="font-size: 0.7rem;">معطلة ✕</span>
+                    }
+                </h4>
+                <div class="text-muted small mt-1">
+                    <span>📍 المدينة: <strong>@Model.city</strong></span>
+                    <span class="mx-2">•</span>
+                    <span>👥 الطلاب المقيدين: <strong>@Model.studentsCount</strong></span>
+                    <span class="mx-2">•</span>
+                    <span>📦 المعروضات: <strong>@Model.listingsCount</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Linked Faculties Section -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h5 class="fw-bold m-0" style="color: var(--salla-primary);">🎓 الكليات والمعاهد المرتبطة (@Model.faculties.Count)</h5>
+        <span class="text-muted small">الكليات المعتمدة المتاحة لطلاب هذه الجامعة عند نشر أو تصفح الإعلانات.</span>
+    </div>
+</div>
+
+<div class="admin-table-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>اسم الكلية الأساسي</th>
+                    <th>المسمى المخصص بالجامعة</th>
+                    <th>التخصصات التابعة</th>
+                    <th>الإعلانات المرتبطة</th>
+                    <th>الحالة</th>
+                    <th class="text-end">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.faculties.Count > 0)
+                {
+                    @foreach (var fac in Model.faculties)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-5">🎓</span>
+                                    <div>
+                                        <a href="/Admin/Faculties/@fac.facultyId" class="fw-bold text-dark text-decoration-none hover-primary">
+                                            @fac.facultyName
+                                        </a>
+                                        <div class="text-muted font-monospace" style="font-size: 0.7rem;">@fac.slug</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(fac.customName))
+                                {
+                                    <span class="badge bg-light text-dark border px-2 py-1">@fac.customName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">المسمى الافتراضي</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="/Admin/Faculties/@fac.facultyId" class="badge rounded-pill text-decoration-none px-2 py-1" style="background-color: var(--salla-primary-light); color: var(--salla-primary);">
+                                    @fac.majorsCount تخصصات ↗
+                                </a>
+                            </td>
+                            <td>
+                                <span class="fw-semibold" style="color: var(--salla-primary);">@fac.listingsCount</span> إعلان
+                            </td>
+                            <td>
+                                @if (fac.isActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0">نشطة ✓</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-pill px-2 py-0">غير نشطة</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-1">
+                                    <a href="/Admin/Faculties/@fac.facultyId" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                        إدارة التخصصات ↗
+                                    </a>
+
+                                    <form method="post" action="/admin/universities/unlink-faculty" class="d-inline" onsubmit="return confirm('هل أنت متأكد من فك ارتباط هذه الكلية بهذه الجامعة؟');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="universityFacultyId" value="@fac.universityFacultyId" />
+                                        <input type="hidden" name="universityId" value="@Model.id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                            فك الارتباط ✕
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <span class="fs-1 d-block mb-2">🎓</span>
+                            <span>لم يتم ربط أي كليات بهذه الجامعة بعد. انقر على زر "ربط كلية جديدة" أعلاه.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Edit University -->
+<div class="modal fade" id="editUniversityModal" tabindex="-1" aria-labelledby="editUniversityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="editUniversityModalLabel" style="color: var(--salla-primary);">✏️ تعديل بيانات الجامعة</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/admin/universities/update">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.id" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اسم الجامعة</label>
+                        <input type="text" name="name" value="@Model.name" class="form-control rounded-3" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">المدينة</label>
+                        <input type="text" name="city" value="@Model.city" class="form-control rounded-3" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">مسار الشعار</label>
+                        <input type="text" name="logoUrl" value="@Model.logoUrl" class="form-control rounded-3" />
+                    </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="isActive" value="true" id="uniActiveSwitch" @(Model.isActive ? "checked" : "") />
+                        <label class="form-check-label fw-semibold small" for="uniActiveSwitch">الجامعة نشطة ومتاحة للطلاب</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn-salla-mint px-4 py-2">حفظ التغييرات ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Link Faculty to University -->
+<div class="modal fade" id="linkFacultyModal" tabindex="-1" aria-labelledby="linkFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="linkFacultyModalLabel" style="color: var(--salla-primary);">➕ ربط كلية بجامعة @Model.name</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/admin/universities/link-faculty">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="universityId" value="@Model.id" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اختر الكلية من الدليل العام <span class="text-danger">*</span></label>
+                        <select name="facultyId" class="form-select rounded-3" required>
+                            <option value="">-- اختر كلية لربطها --</option>
+                            @foreach (var f in Model.availableFacultiesToLink)
+                            {
+                                <option value="@f.id">@f.name (@f.slug)</option>
+                            }
+                        </select>
+                        <span class="text-muted" style="font-size: 0.72rem;">إذا لم تجد الكلية المطلوبة، يمكنك إضافتها أولاً من <a href="/Admin/Faculties" target="_blank">دليل الكليات</a>.</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">مسمى مخصص داخل الجامعة (اختياري)</label>
+                        <input type="text" name="customName" class="form-control rounded-3" placeholder="مثال: كلية الهندسة والعلوم التطبيقية - جامعة عدن" />
+                        <span class="text-muted" style="font-size: 0.72rem;">اتركه فارغاً لاعتماد المسمى القياسي للكلية.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn-salla-mint px-4 py-2">ربط الكلية بالجامعة ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

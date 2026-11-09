@@ -1,0 +1,95 @@
+@model List<PendingVerificationDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة توثيق القيود الجامعية";
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">طلبات توثيق القيد الأكاديمي للطلاب 🎓</h5>
+            <p class="text-muted small mb-0">اعتماد رقم القيد الجامعي يمنح الطالب شارة التوثيق (✓) وتوسيع كوتا النشر المشتركة من 3 إلى 5 إعلانات (خصوصية تامة 100%).</p>
+        </div>
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
+            @Model.Count طلب بانتظار الاعتماد
+        </span>
+    </div>
+
+    @if (Model.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>معلومات الاتصال</th>
+                        <th>الجامعة والكلية</th>
+                        <th>التخصص الأكاديمي</th>
+                        <th>رقم القيد الجامعي</th>
+                        <th>تاريخ الطلب</th>
+                        <th class="text-center">اتخاذ القرار</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@user.fullName</div>
+                                <span class="badge bg-light text-muted border" style="font-size: 0.7rem;">طالب غير موثق بعد</span>
+                            </td>
+                            <td>
+                                <div>@user.email</div>
+                                <div class="text-muted small">@(user.phone ?? "لا يوجد هاتف")</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@user.universityName</div>
+                                <div class="text-muted small">@user.facultyName</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@(user.majorName ?? "عام / غير محدد")</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light font-monospace text-primary border px-2 py-1 fs-6">
+                                    @(user.studentRegNo ?? "غير محدد")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">@user.createdAt.ToString("yyyy/MM/dd HH:mm")</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <!-- Approve Form -->
+                                    <form method="post" action="/Admin/ApproveVerification" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.userId" />
+                                        <button type="submit" class="btn btn-sm btn-salla-mint px-3">
+                                            ✓ اعتماد التوثيق
+                                        </button>
+                                    </form>
+
+                                    <!-- Reject Form -->
+                                    <form method="post" action="/Admin/RejectVerification" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.userId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('هل أنت متأكد من رفض طلب التوثيق وإتاحة إعادة إدخال القيد للطالب؟')">
+                                            ✕ رفض الطلب
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div style="font-size: 3rem; margin-bottom: 8px;">🎉</div>
+            <h6 class="fw-bold" style="color: var(--salla-primary);">تمت مراجعة جميع طلبات التوثيق بنجاح!</h6>
+            <p class="text-muted small">لا توجد أي قيود جامعية معلقة بانتظار الاعتماد حالياً.</p>
+        </div>
+    }
+</div>

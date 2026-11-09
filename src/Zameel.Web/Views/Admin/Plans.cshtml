@@ -1,0 +1,166 @@
+@model List<PlanDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة باقات الاشتراك وسقوف الكوتا";
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">إدارة باقات الاشتراك والكوتا (Plans) 📦</h5>
+            <p class="text-muted small mb-0">تحديد باقات الطلاب والمتاجر، سقوف الإعلانات النشطة، والمزايا المصاحبة.</p>
+        </div>
+        <button class="btn btn-sm btn-salla-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createPlanModal">
+            + إنشاء باقة جديدة
+        </button>
+    </div>
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="row g-3">
+            @foreach (var plan in Model)
+            {
+                <div class="col-12 col-md-4">
+                    <div class="border rounded-4 p-4 bg-light h-100 d-flex flex-column justify-content-between position-relative @(plan.isDefault ? "border-primary" : "")">
+                        @if (plan.isDefault)
+                        {
+                            <span class="position-absolute top-0 end-0 translate-middle-y badge bg-primary rounded-pill px-3 py-1 me-3 shadow-sm" style="font-size: 0.72rem;">
+                                الباقة الافتراضية للطلاب ★
+                            </span>
+                        }
+
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="fw-bold text-dark mb-0">@plan.name</h5>
+                                <span class="badge bg-white text-muted border rounded-pill px-2 py-1 small">
+                                    المشتركين: @plan.subscribersCount
+                                </span>
+                            </div>
+
+                            <p class="text-muted small mb-3">@(plan.description ?? "لا يوجد وصف")</p>
+
+                            <div class="d-flex align-items-baseline gap-1 mb-3">
+                                @if (plan.price == 0)
+                                {
+                                    <span class="fs-4 fw-bold text-success">مجانية</span>
+                                }
+                                else
+                                {
+                                    <span class="fs-3 fw-bold" style="color: var(--salla-primary);">@(((long)plan.price).ToString("N0"))</span>
+                                    <span class="small text-muted">ريال يمني</span>
+                                }
+                                <span class="text-muted small">/ @plan.durationDays يوم</span>
+                            </div>
+
+                            <ul class="list-unstyled small mb-4 d-flex flex-column gap-2 border-top pt-3">
+                                <li class="d-flex align-items-center gap-2">
+                                    <span class="text-success fw-bold">✓</span>
+                                    <span>سقف الإعلانات النشطة: <strong>@plan.maxActiveListings إعلان</strong></span>
+                                </li>
+                                <li class="d-flex align-items-center gap-2">
+                                    @if (plan.hasVerifiedBadge)
+                                    {
+                                        <span class="text-success fw-bold">✓</span>
+                                        <span>شارة التوثيق الأكاديمي (Verified Badge)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">✕</span>
+                                        <span class="text-muted">بدون شارة توثيق</span>
+                                    }
+                                </li>
+                                <li class="d-flex align-items-center gap-2">
+                                    @if (plan.hasStoreProfile)
+                                    {
+                                        <span class="text-success fw-bold">✓</span>
+                                        <span>ملف متجر معتمد + نقطة إيداع جامعية 🏪</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">✕</span>
+                                        <span class="text-muted">حساب طالب عادي</span>
+                                    }
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="pt-2 border-top d-flex align-items-center justify-content-between">
+                            <span class="badge @(plan.isActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill px-2 py-1">
+                                @(plan.isActive ? "نشطة ومتاحة" : "معطلة")
+                            </span>
+                            <span class="text-muted small" style="font-size: 0.72rem;">صلاحية: @plan.durationDays يوم</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Create New Plan Modal -->
+<div class="modal fade" id="createPlanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form method="post" action="/Admin/CreatePlan">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold text-dark">+ إنشاء باقة اشتراك جديدة</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">اسم الباقة <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="مثلاً: باقة المتفوقين أو باقة الخريجين" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">الوصف</label>
+                        <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="مزايا وفائدة الباقة"></textarea>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">السعر (ريال يمني)</label>
+                            <input type="number" step="1" name="price" class="form-control form-control-sm" value="0" min="0" required />
+                            <span class="text-muted" style="font-size: 0.68rem;">أدخل 0 إذا كانت الباقة مجانية</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">سقف الإعلانات النشطة</label>
+                            <input type="number" name="maxActiveListings" class="form-control form-control-sm" value="5" min="1" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">مدة الصلاحية (بالأيام)</label>
+                        <input type="number" name="durationDays" class="form-control form-control-sm" value="30" min="1" required />
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input ms-2" type="checkbox" name="hasVerifiedBadge" value="true" id="planVerifiedBadge" />
+                            <label class="form-check-label small text-dark" for="planVerifiedBadge">
+                                منح شارة التوثيق تلقائياً (Verified Badge)
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input ms-2" type="checkbox" name="hasStoreProfile" value="true" id="planStoreProfile" />
+                            <label class="form-check-label small text-dark" for="planStoreProfile">
+                                تفعيل ملف المتجر الجامعي (Store Profile)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input ms-2" type="checkbox" name="isDefault" value="true" id="planIsDefault" />
+                            <label class="form-check-label small text-dark" for="planIsDefault">
+                                تعيين كباقة افتراضية للمستخدمين الجدد
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-sm btn-salla-primary rounded-pill px-4">إنشاء الباقة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

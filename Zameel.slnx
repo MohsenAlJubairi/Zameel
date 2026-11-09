@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Zameel.Application/Zameel.Application.csproj" />
+    <Project Path="src/Zameel.Domain/Zameel.Domain.csproj" />
+    <Project Path="src/Zameel.Infrastructure/Zameel.Infrastructure.csproj" />
+    <Project Path="src/Zameel.Web/Zameel.Web.csproj" />
+  </Folder>
+</Solution>

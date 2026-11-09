@@ -1,0 +1,33 @@
+{
+  "name": "زميل - السوق الجامعي الذكي",
+  "short_name": "زميل",
+  "description": "سوق طلاب الجامعات لبيع وشراء وتبادل المستلزمات والمعدات الدراسية يداً بيد",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#13112B",
+  "theme_color": "#13112B",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 48x48 32x32 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/images/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/zameel-brand-icon.png",
+      "sizes": "192x192 338x338 512x512",
+      "type": "image/png"
+    }
+  ]
+}

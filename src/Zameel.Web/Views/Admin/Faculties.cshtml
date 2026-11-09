@@ -1,0 +1,180 @@
+@model List<AdminFacultyItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "الدليل العام للكليات والمعاهد";
+}
+
+<!-- Top Header with Actions -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-1" style="color: var(--salla-primary);">🎓 الدليل العام للكليات والمعاهد</h4>
+        <p class="text-muted small mb-0">الفهرس الموحد للكليات الأكاديمية وربط التخصصات والجامعات.</p>
+    </div>
+    <div>
+        <button type="button" class="btn-salla-mint px-4 py-2" data-bs-toggle="modal" data-bs-target="#addFacultyModal">
+            <span>➕</span>
+            <span>إضافة كلية جديدة</span>
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ✅ @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ⚠️ @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Summary Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">إجمالي الكليات في الدليل</span>
+            <h3 class="fw-bold mb-0" style="color: var(--salla-primary);">@Model.Count</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">كليات نشطة</span>
+            <h3 class="fw-bold mb-0 text-success">@Model.Count(f => f.isActive)</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">إجمالي التخصصات المرتبطة</span>
+            <h3 class="fw-bold mb-0 text-primary">@Model.Sum(f => f.majorsCount)</h3>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="kpi-card">
+            <span class="text-muted small fw-semibold">ارتباطات بالجامعات</span>
+            <h3 class="fw-bold mb-0" style="color: var(--salla-purple);">@Model.Sum(f => f.universitiesCount)</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Faculties Table Card -->
+<div class="admin-table-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>اسم الكلية</th>
+                    <th>المعرف البرمجي (Slug)</th>
+                    <th>الجامعات المعتمدة لها</th>
+                    <th>التخصصات التابعة</th>
+                    <th>الحالة</th>
+                    <th class="text-end">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count > 0)
+                {
+                    @foreach (var fac in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center text-muted fw-bold" 
+                                         style="width: 40px; height: 40px; font-size: 1.1rem;">
+                                        🎓
+                                    </div>
+                                    <div>
+                                        <a href="/Admin/Faculties/@fac.id" class="fw-bold text-dark text-decoration-none hover-primary">
+                                            @fac.name
+                                        </a>
+                                        <div class="text-muted" style="font-size: 0.72rem;">أُضيفت في @fac.createdAt.ToString("yyyy/MM/dd")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-muted border font-monospace px-2 py-1">@fac.slug</span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-2 py-1" style="background-color: var(--salla-primary-light); color: var(--salla-primary);">
+                                    🏛️ في @fac.universitiesCount جامعات
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/Admin/Faculties/@fac.id" class="badge rounded-pill text-decoration-none px-2 py-1" style="background-color: var(--salla-mint-soft); color: var(--salla-mint); border: 1px solid var(--salla-mint-light);">
+                                    @fac.majorsCount تخصصات ↗
+                                </a>
+                            </td>
+                            <td>
+                                @if (fac.isActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1">نشطة ✓</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1">معطلة ✕</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex align-items-center justify-content-end gap-1">
+                                    <a href="/Admin/Faculties/@fac.id" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" style="font-size: 0.75rem;" title="إدارة التخصصات">
+                                        إدارة التخصصات ↗
+                                    </a>
+
+                                    <form method="post" action="/admin/faculties/toggle-status" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@fac.id" />
+                                        <button type="submit" class="btn btn-sm @(fac.isActive ? "btn-outline-secondary" : "btn-outline-success") rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                            @(fac.isActive ? "تعطيل" : "تفعيل")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <span class="fs-1 d-block mb-2">🎓</span>
+                            <span>لا توجد كليات مسجلة في الفهرس العام. انقر على "إضافة كلية جديدة" للبدء.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add Faculty -->
+<div class="modal fade" id="addFacultyModal" tabindex="-1" aria-labelledby="addFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="addFacultyModalLabel" style="color: var(--salla-primary);">➕ إضافة كلية جديدة إلى الدليل</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/admin/faculties/add">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اسم الكلية القياسي <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control rounded-3" placeholder="مثال: كلية التربية والعلوم" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">المعرف البرمجي (Slug)</label>
+                        <input type="text" name="slug" class="form-control rounded-3 font-monospace" placeholder="مثال: education-and-sciences (اتركه فارغاً للتوليد التلقائي)" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn-salla-mint px-4 py-2">حفظ الكلية في الدليل ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

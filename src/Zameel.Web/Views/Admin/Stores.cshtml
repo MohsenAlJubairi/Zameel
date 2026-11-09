@@ -1,0 +1,121 @@
+@model List<AdminStoreItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "إدارة المتاجر والمكتبات B2B";
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">حسابات المتاجر والمكتبات المعتمدة 🏪</h5>
+            <p class="text-muted small mb-0">اعتماد الحسابات التجارية للقرطاسيات ومحلات بيع الحواسيب وتجديد اشتراكاتهم الفصلية.</p>
+        </div>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+            إجمالي المتاجر: @Model.Count
+        </span>
+    </div>
+
+    @if (Model.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>اسم المتجر</th>
+                        <th>صاحب الحساب</th>
+                        <th>السجل التجاري</th>
+                        <th>حالة الحساب</th>
+                        <th>انتهاء الاشتراك</th>
+                        <th class="text-center">إجراءات الاعتماد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var store in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@store.storeName</div>
+                                <span class="text-muted small">انضم بتاريخ @store.createdAt.ToString("yyyy/MM/dd")</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@store.ownerName</div>
+                                <div class="text-muted small">@store.ownerEmail</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @(store.commercialRegister ?? "لم يُرفق سجل")
+                                </span>
+                            </td>
+                            <td>
+                                @if (store.isApproved)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                                        معتمد ونشط
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning border px-2 py-1 rounded-pill">
+                                        معلق / مجمد
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (store.subscriptionExpiresAt > DateTime.UtcNow)
+                                {
+                                    <span class="text-success small fw-semibold">
+                                        سارٍ حتى @store.subscriptionExpiresAt.ToString("yyyy/MM/dd")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger small fw-semibold">منتهي الصلاحية</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    @if (!store.isApproved)
+                                    {
+                                        <form method="post" action="/Admin/ApproveStore" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="storeProfileId" value="@store.id" />
+                                            <input type="hidden" name="months" value="3" />
+                                            <button type="submit" class="btn btn-sm btn-salla-mint px-3">
+                                                ✓ اعتماد (3 أشهر)
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" action="/Admin/ApproveStore" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="storeProfileId" value="@store.id" />
+                                            <input type="hidden" name="months" value="3" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary px-2" title="تمديد 3 أشهر إضافية">
+                                                + تمديد
+                                            </button>
+                                        </form>
+
+                                        <form method="post" action="/Admin/FreezeStore" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="storeProfileId" value="@store.id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger px-2" onclick="return confirm('هل تريد تجميد هذا الحساب التجاري؟')">
+                                                تجميد
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted small">
+            لا توجد حسابات متاجر مسجلة حالياً.
+        </div>
+    }
+</div>

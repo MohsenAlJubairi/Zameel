@@ -1,0 +1,515 @@
+@model CreateListingViewModel
+@{
+    ViewData["Title"] = "نشر مستلزم دراسي";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-9 col-lg-7">
+        <div class="card salla-card p-3 shadow-sm mb-3 border-0" style="background: #ffffff; border-radius: var(--radius-xl);">
+            
+            <!-- Header (Brand Icon + Professional Title) -->
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 42px; height: 42px; background: rgba(0, 229, 163, 0.12); color: var(--brand-mint);">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                            <path d="M6 6h10"></path>
+                            <path d="M6 10h10"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold m-0" style="color: var(--brand-midnight); ">نشر مستلزم دراسي</h5>
+                        <span class="text-muted small">اعرض كتبك، ملازمك، أو أدواتك لزملائك في الحرم الجامعي</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model?.errorMessage))
+            {
+                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs d-flex align-items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>@Model.errorMessage</span>
+                </div>
+            }
+
+            <form id="createListingForm" asp-controller="Listings" asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <!-- 1. Campus Location (Simplified & Clear) -->
+                <div class="p-3 rounded-4 mb-3" style="background-color: var(--brand-alabaster); border: 1px solid var(--border-color);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-mint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <h6 class="fw-bold small m-0" style="color: var(--brand-midnight);">أين تعرض المستلزم؟</h6>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">الجامعة <span class="text-danger">*</span></label>
+                        <select id="universitySelect" name="universityId" class="form-select rounded-3" required>
+                            <option value="">-- اختر الجامعة --</option>
+                            @if (Model?.universities != null)
+                            {
+                                @foreach (var uni in Model.universities)
+                                {
+                                    <option value="@uni.id" selected="@(Model.universityId == uni.id)">@uni.name (@uni.city)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label small fw-semibold">الكلية (اختياري)</label>
+                            <select id="facultySelect" name="primaryFacultyId" class="form-select rounded-3">
+                                <option value="">عام لكافة الكليات في الجامعة</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label small fw-semibold">التخصص (اختياري)</label>
+                            <select id="majorSelect" name="primaryMajorId" class="form-select rounded-3">
+                                <option value="">عام لكافة التخصصات</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Mandatory Campus Bookstore Drop-off (PUDO Hub) -->
+                @if (Model.isStoreUser)
+                {
+                    <div class="p-3 rounded-4 mb-3" style="background: rgba(0, 229, 163, 0.08); border: 1px solid rgba(0, 229, 163, 0.3);">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-4">🏪</span>
+                            <div>
+                                <h6 class="fw-bold small m-0" style="color: var(--brand-midnight);">عرض مباشر باسم مكتبتك المعتمدة</h6>
+                                <span class="text-muted" style="font-size: 0.76rem;">يتم تفعيل ونشر المستلزم فوراً في السوق الجامعي ويكون متاحاً للاستلام من مكتبتك مباشرة.</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-3 rounded-4 mb-3" style="background-color: var(--brand-alabaster); border: 1px solid var(--border-color);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-mint)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path>
+                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path>
+                                    <path d="M2 7h20"></path>
+                                </svg>
+                                <h6 class="fw-bold small m-0" style="color: var(--brand-midnight);">المكتبة الجامعية المعتمدة (نقطة الإيداع والاستلام) <span class="text-danger">*</span></h6>
+                            </div>
+                            <span class="badge rounded-pill badge-cyan-verified px-2 py-1" style="font-size: 0.68rem;">أمان وخصوصية 100% 🛡️</span>
+                        </div>
+                        <p class="text-muted small mb-2" style="font-size: 0.78rem;">
+                            وفقاً لمعايير أمان مجتمع زميل، يتم إيداع كافة المستلزمات لدى إحدى المكتبات المعتمدة داخل الحرم لحفظ حقوق الجميع وعدم إضاعة الوقت.
+                        </p>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">اختر المكتبة التي سلمت لها المستلزم <span class="text-danger">*</span></label>
+                            <select id="pickupStoreSelect" name="pickupStoreId" class="form-select rounded-3" required>
+                                <option value="">-- اختر المكتبة الجامعية المودع لديها الغرض --</option>
+                                @if (Model?.availableStores != null)
+                                {
+                                    @foreach (var store in Model.availableStores)
+                                    {
+                                        <option value="@store.storeProfileId" selected="@(Model.pickupStoreId == store.storeProfileId)">
+                                            @store.storeName @(!string.IsNullOrEmpty(store.locationDescription) ? $"({store.locationDescription})" : (!string.IsNullOrEmpty(store.facultyName) ? $"({store.facultyName})" : ""))
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="p-2 rounded-3 bg-white border d-flex align-items-center gap-2 text-muted" style="font-size: 0.74rem;">
+                            <span>ℹ️</span>
+                            <span>سيبقى إعلانك بحالة <strong>"معلق"</strong> حتى تؤكد المكتبة استلام وفحص السلعة، ليتم تفعيله تلقائياً في السوق للزملاء.</span>
+                        </div>
+                    </div>
+                }
+
+                <!-- 3. Listing Info -->
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">اسم المستلزم أو الغرض <span class="text-danger">*</span></label>
+                    <input asp-for="title" class="form-control rounded-3" placeholder="مثال: كتاب الفيزياء الجامعية 1، آلة حاسبة علمية Casio، أدوات تشريح..." required maxlength="200" />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">نوع العرض <span class="text-danger">*</span></label>
+                        <select asp-for="type" id="listingTypeSelect" class="form-select rounded-3">
+                            <option value="@ListingType.ForSale">معروض للبيع</option>
+                            <option value="@ListingType.Donation">إهداء / تبرع مجاني</option>
+                            <option value="@ListingType.Request">طلب مستلزم (مطلوب)</option>
+                            <option value="@ListingType.CourseBundle">حزمة دراسية متكاملة</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">حالة المستلزم</label>
+                        <select asp-for="condition" class="form-select rounded-3">
+                            <option value="@ItemCondition.New">جديد</option>
+                            <option value="@ItemCondition.LikeNew">مستعمل نظيف</option>
+                            <option value="@ItemCondition.Used">لا بأس</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Price Field (Auto-locked to 0 on Donation) -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-semibold m-0">السعر المطلوب</label>
+                        <div id="priceHint"></div>
+                    </div>
+                    <div class="input-group">
+                        <input asp-for="price" id="priceInput" type="number" step="1" min="0" class="form-control rounded-start-3" placeholder="0" />
+                        <span class="input-group-text bg-light text-muted small rounded-end-3">ريال يمني</span>
+                    </div>
+                </div>
+
+                <!-- Details and Campus Handover -->
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">التفاصيل ومواصفات المستلزم <span class="text-danger">*</span></label>
+                    <textarea asp-for="description" class="form-control rounded-3" rows="3" 
+                              placeholder="اكتب مواصفات المستلزم، رقم الطبعة، نظافة الأوراق، وأي ملاحظات تود إعلام المشتري بها عند استلامه من المكتبة..." 
+                              required maxlength="4000"></textarea>
+                </div>
+
+                <!-- 3. Smart Multi-Image Upload with Instant Canvas WebP Compression -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="form-label small fw-semibold m-0">صور المستلزم (حتى 5 صور)</label>
+                        <span id="imageCountBadge" class="badge rounded-pill bg-light text-muted border" style="font-size: 0.72rem;">0 / 5</span>
+                    </div>
+
+                    <!-- Hidden Real Form File Input (Synced with DataTransfer) -->
+                    <input type="file" name="images" id="imageInput" multiple accept=".jpg,.jpeg,.png,.webp" class="d-none" />
+
+                    <!-- Native Picker Trigger (Resets each time so selecting more pictures appends them) -->
+                    <input type="file" id="nativeFilePicker" multiple accept="image/*" class="d-none" />
+
+                    <!-- Custom Dropzone & Add Button -->
+                    <div id="uploadDropzone" class="p-3 rounded-3 text-center border-dashed" 
+                         style="border: 2px dashed rgba(19, 17, 43, 0.18); background: #fafbfc; cursor: pointer; transition: all 0.2s ease;">
+                        <div class="d-flex flex-column align-items-center gap-1 py-1">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 44px; height: 44px; background: rgba(0, 229, 163, 0.15); color: var(--brand-midnight);">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            </div>
+                            <span class="fw-semibold small" style="color: var(--brand-midnight);">اضغط لاختيار أو التقاط الصور</span>
+                            <span class="text-muted" style="font-size: 0.72rem;">يتم ضغط الصور تلقائياً لصيغة WebP فائقة الخفة والسرعة</span>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Previews (With Delete Buttons & File Sizes) -->
+                    <div id="imagePreviewContainer" class="d-flex flex-wrap gap-2 mt-3"></div>
+                </div>
+
+                <!-- Submit Button with Anti-Duplicate Protection -->
+                <button type="submit" id="submitBtn" class="btn-salla-mint w-100 justify-content-center py-2 fs-6 shadow-sm">
+                    <span id="btnText">نشر المستلزم في الحرم الجامعي</span>
+                    <span id="btnIcon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // 1. Cascading Dropdowns: University -> Faculty -> Major
+    const uniSelect = document.getElementById('universitySelect');
+    const facultySelect = document.getElementById('facultySelect');
+    const majorSelect = document.getElementById('majorSelect');
+    const defaultFacultyId = '@(Model?.primaryFacultyId?.ToString() ?? "")';
+    const defaultMajorId = '@(Model?.primaryMajorId?.ToString() ?? "")';
+    const pickupStoreSelect = document.getElementById('pickupStoreSelect');
+    const defaultStoreId = '@(Model?.pickupStoreId?.ToString() ?? "")';
+
+    async function loadStores(uniId, preselectStoreId = '') {
+        if (!pickupStoreSelect) return;
+        if (!uniId) {
+            pickupStoreSelect.innerHTML = '<option value="">-- اختر الجامعة أولاً لعرض المكتبات --</option>';
+            return;
+        }
+
+        pickupStoreSelect.innerHTML = '<option value="">جاري تحميل المكتبات المعتمدة...</option>';
+        try {
+            const res = await fetch(`/academic-catalog/stores?universityId=${uniId}`);
+            const json = await res.json();
+            if (json.isSuccess && json.data && json.data.length > 0) {
+                let options = '<option value="">-- اختر المكتبة الجامعية المودع لديها الغرض --</option>';
+                json.data.forEach(s => {
+                    const storeId = s.storeProfileId || s.id;
+                    const isSel = (preselectStoreId && preselectStoreId.toLowerCase() === storeId.toLowerCase()) ? 'selected' : '';
+                    const loc = s.locationDescription ? ` (${s.locationDescription})` : (s.facultyName ? ` (${s.facultyName})` : '');
+                    options += `<option value="${storeId}" ${isSel}>${s.storeName}${loc}</option>`;
+                });
+                pickupStoreSelect.innerHTML = options;
+            } else {
+                pickupStoreSelect.innerHTML = '<option value="">لا توجد مكتبات معتمدة مسجلة حالياً لهذه الجامعة</option>';
+            }
+        } catch {
+            pickupStoreSelect.innerHTML = '<option value="">تعذر تحميل المكتبات</option>';
+        }
+    }
+
+    async function loadFaculties(uniId, preselectFacultyId = '') {
+        if (!uniId) {
+            facultySelect.innerHTML = '<option value="">عام لكافة الكليات في الجامعة</option>';
+            majorSelect.innerHTML = '<option value="">عام لكافة التخصصات</option>';
+            return;
+        }
+
+        facultySelect.innerHTML = '<option value="">جاري التحميل...</option>';
+        try {
+            const res = await fetch(`/academic-catalog/faculties?universityId=${uniId}`);
+            const json = await res.json();
+            if (json.isSuccess && json.data && json.data.length > 0) {
+                let options = '<option value="">عام لكافة الكليات في الجامعة</option>';
+                json.data.forEach(f => {
+                    const isSel = (preselectFacultyId && preselectFacultyId.toLowerCase() === f.id.toLowerCase()) ? 'selected' : '';
+                    options += `<option value="${f.id}" ${isSel}>${f.displayName}</option>`;
+                });
+                facultySelect.innerHTML = options;
+                if (preselectFacultyId) {
+                    loadMajors(preselectFacultyId, defaultMajorId);
+                }
+            } else {
+                facultySelect.innerHTML = '<option value="">عام لكافة الكليات</option>';
+            }
+        } catch {
+            facultySelect.innerHTML = '<option value="">عام لكافة الكليات</option>';
+        }
+    }
+
+    async function loadMajors(facultyId, preselectMajorId = '') {
+        if (!facultyId) {
+            majorSelect.innerHTML = '<option value="">عام لكافة التخصصات</option>';
+            return;
+        }
+
+        majorSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+        try {
+            const res = await fetch(`/academic-catalog/majors?facultyId=${facultyId}`);
+            const json = await res.json();
+            if (json.isSuccess && json.data && json.data.length > 0) {
+                let options = '<option value="">عام لكافة التخصصات</option>';
+                json.data.forEach(m => {
+                    const isSel = (preselectMajorId && preselectMajorId.toLowerCase() === m.id.toLowerCase()) ? 'selected' : '';
+                    options += `<option value="${m.id}" ${isSel}>${m.name}</option>`;
+                });
+                majorSelect.innerHTML = options;
+            } else {
+                majorSelect.innerHTML = '<option value="">عام لكافة التخصصات</option>';
+            }
+        } catch {
+            majorSelect.innerHTML = '<option value="">عام لكافة التخصصات</option>';
+        }
+    }
+
+    uniSelect.addEventListener('change', function () {
+        loadFaculties(this.value);
+        loadStores(this.value);
+    });
+
+    facultySelect.addEventListener('change', function () {
+        loadMajors(this.value);
+    });
+
+    // Auto-load if university is preselected
+    if (uniSelect.value) {
+        loadFaculties(uniSelect.value, defaultFacultyId);
+        loadStores(uniSelect.value, defaultStoreId);
+    }
+
+    // 2. Donation Auto-Zero Price Logic
+    const typeSelect = document.getElementById('listingTypeSelect');
+    const priceInput = document.getElementById('priceInput');
+    const priceHint = document.getElementById('priceHint');
+
+    function handleTypeChange() {
+        if (typeSelect.value === '1' || typeSelect.value === 'Donation') {
+            priceInput.value = '0';
+            priceInput.readOnly = true;
+            priceInput.style.backgroundColor = 'rgba(0, 229, 163, 0.1)';
+            priceInput.style.color = '#0b6848';
+            priceInput.style.fontWeight = 'bold';
+            if (priceHint) {
+                priceHint.innerHTML = '<span class="badge rounded-pill" style="background-color: var(--brand-mint); color: var(--brand-midnight); font-size: 0.72rem;">مجاني تماماً</span>';
+            }
+        } else {
+            priceInput.readOnly = false;
+            priceInput.style.backgroundColor = '';
+            priceInput.style.color = '';
+            priceInput.style.fontWeight = '';
+            if (priceHint) {
+                priceHint.innerHTML = '';
+            }
+        }
+    }
+
+    typeSelect.addEventListener('change', handleTypeChange);
+    handleTypeChange();
+
+    // 3. Smart Multi-Image Accumulator & Client-Side Canvas WebP Compressor
+    const selectedFiles = []; // Array of File objects (WebP)
+    const nativePicker = document.getElementById('nativeFilePicker');
+    const finalFormInput = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const countBadge = document.getElementById('imageCountBadge');
+    const dropzone = document.getElementById('uploadDropzone');
+
+    dropzone.addEventListener('click', () => {
+        if (selectedFiles.length >= 5) {
+            alert('وصلت للحد الأقصى المسموح به (5 صور).');
+            return;
+        }
+        nativePicker.click();
+    });
+
+    // In-browser WebP image compressor
+    async function compressToWebP(file) {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 1600;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const newName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+                            const compressed = new File([blob], newName, { type: 'image/webp' });
+                            resolve(compressed);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/webp', 0.82);
+                };
+                img.onerror = () => resolve(file);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    nativePicker.addEventListener('change', async function () {
+        if (!this.files || this.files.length === 0) return;
+
+        for (let i = 0; i < this.files.length; i++) {
+            if (selectedFiles.length >= 5) break;
+            const file = this.files[i];
+            const compressed = await compressToWebP(file);
+            selectedFiles.push(compressed);
+        }
+
+        // Reset native picker value so picking another photo NEVER replaces previous photos
+        this.value = '';
+        syncFiles();
+    });
+
+    function syncFiles() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        finalFormInput.files = dt.files;
+        countBadge.textContent = `${selectedFiles.length} / 5`;
+        renderPreviews();
+    }
+
+    function removeImage(index) {
+        selectedFiles.splice(index, 1);
+        syncFiles();
+    }
+
+    function renderPreviews() {
+        previewContainer.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'position-relative rounded-3 overflow-hidden border shadow-xs';
+            wrapper.style.width = '84px';
+            wrapper.style.height = '84px';
+            wrapper.style.background = '#f3f4f6';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'btn btn-danger btn-sm p-0 position-absolute d-flex align-items-center justify-content-center';
+            delBtn.style.top = '4px';
+            delBtn.style.left = '4px';
+            delBtn.style.width = '20px';
+            delBtn.style.height = '20px';
+            delBtn.style.borderRadius = '50%';
+            delBtn.style.fontSize = '11px';
+            delBtn.innerHTML = '✕';
+            delBtn.title = 'حذف الصورة';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeImage(index);
+            };
+
+            // Size badge
+            const sizeBadge = document.createElement('span');
+            sizeBadge.className = 'position-absolute bottom-0 start-0 end-0 text-center text-white py-0';
+            sizeBadge.style.fontSize = '9px';
+            sizeBadge.style.background = 'rgba(19, 17, 43, 0.75)';
+            const kb = Math.round(file.size / 1024);
+            sizeBadge.textContent = `${kb} KB`;
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(delBtn);
+            wrapper.appendChild(sizeBadge);
+            previewContainer.appendChild(wrapper);
+        });
+    }
+
+    // 4. Form Submit Anti-Duplicate Protection
+    document.getElementById('createListingForm').addEventListener('submit', function () {
+        const btn = document.getElementById('submitBtn');
+        const text = document.getElementById('btnText');
+        priceInput.readOnly = false; // ensure price passes to POST body
+        btn.disabled = true;
+        text.innerText = 'جاري حفظ ونشر المستلزم...';
+    });
+</script>
+}

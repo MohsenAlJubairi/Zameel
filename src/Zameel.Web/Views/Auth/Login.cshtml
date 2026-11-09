@@ -1,0 +1,116 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "تسجيل الدخول";
+}
+
+<div class="row justify-content-center py-3">
+    <div class="col-12 col-md-7 col-lg-5">
+        <!-- Brand Header -->
+        <div class="text-center mb-4">
+            <a href="/" class="salla-brand justify-content-center text-decoration-none d-inline-flex align-items-center gap-2">
+                <img src="~/images/zameel-brand-icon.png" alt="شعار زميل" style="width: 38px; height: 38px; object-fit: contain;" />
+                <span class="fs-2 fw-bold" style="color: var(--brand-midnight);">زميل</span>
+                <span class="salla-brand-dot fs-1">.</span>
+            </a>
+            <p class="text-muted small mt-1">السوق الجامعي الذكي • تسجيل دخول آمن عبر البريد الإلكتروني</p>
+        </div>
+
+        <div class="card salla-card p-3 p-md-4 shadow-sm mb-3">
+            @if (!string.IsNullOrEmpty(Model.errorMessage))
+            {
+                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+                    ⚠️ @Model.errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.infoMessage))
+            {
+                <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+                    ✓ @Model.infoMessage
+                </div>
+            }
+
+            @if (!Model.otpSent)
+            {
+                <!-- الخطوة 1: إدخال البريد الإلكتروني لإرسال رقم البن -->
+                <form method="post" asp-action="SendOtp">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@Model.returnUrl" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">البريد الإلكتروني <span class="text-danger">*</span></label>
+                        <div class="salla-search-box">
+                            <input type="email" name="emailOrPhone" value="@Model.emailOrPhone" 
+                                   class="form-control rounded-pill border-0 shadow-none px-3" 
+                                   placeholder="مثال: student@university.edu أو name@domain.com" 
+                                   style="min-height: 48px; font-size: 0.95rem;" required autofocus />
+                        </div>
+                        <span class="text-muted d-block mt-1" style="font-size: 0.75rem;">سنرسل لك رمز تحقق (رقم PIN) مكون من 4 أرقام لتسجيل الدخول بأمان.</span>
+                    </div>
+
+                    <button type="submit" class="btn-salla-mint w-100 justify-content-center py-2 fs-6 mb-3 shadow-xs">
+                        <span>إرسال رمز الدخول (PIN)</span>
+                        <span>←</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <!-- الخطوة 2: إدخال رقم البن (PIN) المستلم عبر الإيميل -->
+                <form method="post" asp-action="VerifyOtp">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@Model.returnUrl" />
+                    <input type="hidden" name="emailOrPhone" value="@Model.emailOrPhone" />
+
+                    <div class="mb-3 text-center bg-light p-2 rounded-3">
+                        <span class="text-muted small d-block">تم إرسال رمز التحقق (PIN) إلى:</span>
+                        <div class="fw-bold font-monospace" style="color: var(--salla-primary);">@Model.emailOrPhone</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-center d-block" style="color: var(--salla-primary);">
+                            أدخل رقم البن (رمز التحقق - 4 أرقام)
+                        </label>
+                        <div class="d-flex justify-content-center">
+                            <input type="text" name="otpCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" 
+                                   class="form-control text-center fw-bold fs-2 rounded-4 shadow-sm font-monospace" 
+                                   style="max-width: 200px; letter-spacing: 10px; border-color: var(--salla-mint); height: 56px;" 
+                                   placeholder="••••" required autofocus />
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-muted" style="font-size: 0.74rem;">تفقّد صندوق الوارد أو الرسائل غير المرغوب فيها (Spam).</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-salla-mint w-100 justify-content-center py-2 fs-6 mb-3 shadow-xs">
+                        <span>تأكيد والدخول</span>
+                        <span>✓</span>
+                    </button>
+
+                    <div class="d-flex flex-column align-items-center gap-2 pt-2 border-top">
+                        <!-- خيار إعادة إرسال رقم البن في حال نسيه أو لم يصله -->
+                        <form method="post" asp-action="SendOtp" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnUrl" value="@Model.returnUrl" />
+                            <input type="hidden" name="emailOrPhone" value="@Model.emailOrPhone" />
+                            <button type="submit" class="btn btn-link btn-sm text-decoration-none p-0" style="color: var(--salla-primary); font-size: 0.8rem;">
+                                🔄 لم يصلك الرمز؟ إعادة إرسال رمز PIN جديد
+                            </button>
+                        </form>
+
+                        <a asp-action="Login" asp-route-returnUrl="@Model.returnUrl" class="text-muted small text-decoration-none" style="font-size: 0.78rem;">
+                            تغيير البريد الإلكتروني
+                        </a>
+                    </div>
+                </form>
+            }
+
+            <div class="text-center mt-3 pt-3 border-top">
+                <span class="text-muted small">مستجد في زميل؟</span>
+                <a asp-action="Register" asp-route-returnUrl="@Model.returnUrl" class="fw-bold text-decoration-none ms-1" style="color: var(--salla-primary);">
+                    إنشاء حساب جديد 🎓
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

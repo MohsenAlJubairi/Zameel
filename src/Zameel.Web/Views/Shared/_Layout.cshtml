@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    @{
+        var pageTitle = ViewData["Title"]?.ToString()?.Trim();
+        string formattedTitle;
+        if (string.IsNullOrWhiteSpace(pageTitle) || pageTitle == "الرئيسية" || pageTitle.Contains("السوق الجامعي الذكي"))
+        {
+            formattedTitle = "زميل | السوق الجامعي الذكي";
+        }
+        else
+        {
+            var cleaned = pageTitle
+                .Replace(" - زميل", "")
+                .Replace(" | زميل", "")
+                .Replace("الرئيسية - ", "")
+                .Replace("الرئيسية | ", "")
+                .Trim();
+            formattedTitle = $"{cleaned} | زميل";
+        }
+    }
+    <title>@formattedTitle</title>
+
+    <!-- Favicon & Brand Icons -->
+    <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" asp-append-version="true" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/images/favicon-32x32.png" asp-append-version="true" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/images/favicon-16x16.png" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/images/zameel-brand-icon.png" asp-append-version="true" />
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="~/manifest.json" />
+    <meta name="theme-color" content="#13112B" />
+
+    <!-- OpenGraph Tags (WhatsApp & Social Preview) -->
+    <meta property="og:site_name" content="منصة زميل - السوق الجامعي الذكي" />
+    <meta property="og:title" content="@(ViewData["OgTitle"] ?? formattedTitle)" />
+    <meta property="og:description" content="@(ViewData["OgDescription"] ?? "سوق طلاب الجامعات لبيع وشراء وتبادل المستلزمات والمعدات الدراسية يداً بيد.")" />
+    <meta property="og:image" content="@(ViewData["OgImage"] ?? "/images/zameel-brand-icon.png")" />
+    <meta property="og:type" content="website" />
+
+    <!-- Fonts: Readex Pro + Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS: Bootstrap RTL + Zameel Brand Design System -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Zameel Brand Sticky Header -->
+    <header class="sticky-top salla-header">
+        <div class="container py-2 px-3">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+                <!-- Brand Logo (Peer-Exchange Icon + Arabic Typography) -->
+                <div class="d-flex align-items-center gap-2">
+                    <a class="salla-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                        <img src="~/images/zameel-brand-icon.png" alt="شعار زميل" class="brand-icon-img" />
+                        <span>زميل</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Search Pill -->
+                <div class="d-none d-md-block flex-grow-1 mx-4" style="max-width: 480px;">
+                    <form method="get" asp-controller="Home" asp-action="Index">
+                        <div class="salla-search-box">
+                            <input type="text" name="searchTerm" class="salla-search-input" placeholder="ابحث عن كتاب، جهاز، أو ملزمة دراسية..." />
+                            <svg class="salla-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="d-flex align-items-center gap-2">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="dropdown">
+                            <button class="btn-salla-outline dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="d-none d-sm-inline fw-semibold text-truncate" style="max-width: 120px;">@User.Identity.Name</span>
+                                @if (User.HasClaim("IsVerified", "True"))
+                                {
+                                    <span class="salla-verified-badge" title="موثق رسمياً">✓</span>
+                                }
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border rounded-4 p-2 mt-2" style="min-width: 210px;">
+                                <li class="px-3 py-2 border-bottom mb-1">
+                                    <div class="fw-bold text-dark text-truncate">@User.Identity.Name</div>
+                                    <span class="badge @(User.IsInRole("Admin") ? "bg-danger text-white" : User.IsInRole("Store") ? "badge-cyan-verified" : User.HasClaim("IsVerified", "True") ? "badge-cyan-verified" : "bg-light text-muted border") rounded-pill" style="font-size: 0.68rem;">
+                                        @(User.IsInRole("Admin") ? "مدير النظام" : User.IsInRole("Store") ? "مكتبة معتمدة" : User.HasClaim("IsVerified", "True") ? "طالب موثق (5 إعلانات)" : "طالب عادي (3 إعلانات)")
+                                    </span>
+                                </li>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/Admin">لوحة الإدارة</a></li>
+                                }
+                                @if (User.IsInRole("Store"))
+                                {
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/store">لوحة إدارة المكتبة</a></li>
+                                }
+                                <li><a class="dropdown-item rounded-3 py-2" asp-controller="Profile" asp-action="Index">الملف الأكاديمي والكوتا</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li><a class="dropdown-item rounded-3 py-2 text-danger" asp-controller="Auth" asp-action="Logout">تسجيل الخروج</a></li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center gap-2">
+                            <a asp-controller="Auth" asp-action="Login" class="btn-salla-outline px-3 py-1 text-decoration-none shadow-xs">
+                                تسجيل الدخول
+                            </a>
+                            <a asp-controller="Auth" asp-action="Register" class="btn-salla-mint px-3 py-1 text-decoration-none shadow-xs">
+                                إنشاء حساب
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main role="main" class="container my-3 px-3">
+        @RenderBody()
+    </main>
+
+    <!-- Zameel Unified Navigation Dock (Phone & Desktop Floating Island) -->
+    @{
+        var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+        var currentAct = ViewContext.RouteData.Values["action"]?.ToString();
+        var currentType = Context.Request.Query["type"].ToString();
+
+        bool isRequestActive = (currentType == "4" || currentType.Equals("Request", System.StringComparison.OrdinalIgnoreCase));
+        bool isCreateActive = currentCtrl == "Listings" && currentAct == "Create";
+        bool isProfileActive = currentCtrl == "Profile";
+        bool isAdminActive = currentCtrl == "Admin";
+        bool isStoreActive = currentCtrl == "Store";
+        bool isHomeActive = !isRequestActive && !isCreateActive && !isProfileActive && !isAdminActive && !isStoreActive;
+    }
+    <nav class="bottom-nav" id="zameelNavDock">
+        <a asp-controller="Home" asp-action="Index" class="bottom-nav-item @(isHomeActive ? "active" : "")" title="الرئيسية">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>الرئيسية</span>
+        </a>
+
+        <a asp-controller="Home" asp-action="Index" asp-route-type="4" class="bottom-nav-item @(isRequestActive ? "active" : "")" title="لوحة مطلوب">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <span>مطلوب</span>
+        </a>
+
+        <!-- Floating Elevated Add Button in Middle -->
+        <a asp-controller="Listings" asp-action="Create" class="bottom-nav-add-btn @(isCreateActive ? "active" : "")" title="أضف إعلان جديد">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </a>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a href="/Admin" class="bottom-nav-item @(isAdminActive ? "active" : "")" title="لوحة الإدارة">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>الإدارة</span>
+            </a>
+        }
+        else if (User.IsInRole("Store"))
+        {
+            <a href="/store" class="bottom-nav-item @(isStoreActive ? "active" : "")" title="لوحة المكتبة">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path></svg>
+                <span>المكتبة</span>
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Profile" asp-action="Index" class="bottom-nav-item @(isProfileActive ? "active" : "")" title="الملف الأكاديمي">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>حسابي</span>
+            </a>
+        }
+    </nav>
+
+    <!-- Core Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,117 @@
+@model ListingCardDto
+
+<div class="col-6 col-md-4 col-lg-3 mb-3">
+    <div class="salla-card h-100">
+        <!-- Floating Badges Layer -->
+        <div class="position-absolute top-0 end-0 m-2 d-flex flex-column gap-1" style="z-index: 3;">
+            @if (Model.type == ListingType.Donation)
+            {
+                <span class="salla-badge salla-badge-success">تبرع مجاني</span>
+            }
+            else if (Model.type == ListingType.Request)
+            {
+                <span class="salla-badge badge-saffron">مطلوب</span>
+            }
+            else if (Model.type == ListingType.CourseBundle)
+            {
+                <span class="salla-badge salla-badge-purple">حزمة مواد</span>
+            }
+
+            @if (Model.condition == ItemCondition.New)
+            {
+                <span class="salla-badge salla-badge-mint">جديد</span>
+            }
+            else if (Model.condition == ItemCondition.LikeNew)
+            {
+                <span class="salla-badge salla-badge-mint" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">شبه جديد</span>
+            }
+        </div>
+
+        <!-- Product Image Showcase -->
+        <a asp-controller="Listings" asp-action="Details" asp-route-id="@Model.id" class="text-decoration-none">
+            <div class="salla-card-img-wrap">
+                @if (!string.IsNullOrEmpty(Model.primaryImageUrl))
+                {
+                    <img src="@Model.primaryImageUrl" class="salla-card-img" alt="@Model.title" loading="lazy" />
+                }
+                else
+                {
+                    <div class="salla-card-default-wrap">
+                        <img src="~/images/zameel-brand-icon.png" class="salla-card-default-img" alt="@Model.title" loading="lazy" />
+                    </div>
+                }
+            </div>
+        </a>
+
+        <!-- Card Details Content -->
+        <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+            <div>
+                <!-- Academic Context: University & Faculty Pill -->
+                <div class="mb-2">
+                    <span class="salla-academic-tag text-truncate">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M3 21h18"></path><path d="M3 7l9-4 9 4"></path><path d="M4 10h16"></path><path d="M6 10v11"></path><path d="M10 10v11"></path><path d="M14 10v11"></path><path d="M18 10v11"></path></svg>
+                        <span class="text-truncate" title="@Model.universityName">@Model.universityName</span>
+                        @if (!string.IsNullOrEmpty(Model.facultyName))
+                        {
+                            <span>•</span>
+                            <span class="text-truncate fw-semibold" style="color: var(--salla-primary);" title="@Model.facultyName">@Model.facultyName</span>
+                        }
+                    </span>
+                    @if (!string.IsNullOrEmpty(Model.pickupStoreName))
+                    {
+                        <div class="mt-1 d-flex align-items-center gap-1 text-muted text-truncate" style="font-size: 0.7rem;" title="متوفر للاستلام في @Model.pickupStoreName">
+                            <span style="color: var(--brand-mint); font-size: 0.75rem;">🏪</span>
+                            <span class="text-truncate">مستلم لدى: <strong class="text-dark">@Model.pickupStoreName</strong></span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Listing Title -->
+                <h6 class="text-truncate-2 mb-2" style="font-size: 0.88rem; line-height: 1.4; min-height: 2.5em;">
+                    <a asp-controller="Listings" asp-action="Details" asp-route-id="@Model.id" class="text-decoration-none text-dark hover-primary fw-semibold">
+                        @Model.title
+                    </a>
+                </h6>
+            </div>
+
+            <!-- Price and Seller Row -->
+            <div class="mt-2 pt-2 border-top">
+                <div class="d-flex align-items-baseline justify-content-between mb-2">
+                    <!-- Price -->
+                    <div>
+                        @if (Model.price == 0 || Model.type == ListingType.Donation)
+                        {
+                            <span class="salla-price-free">مجاني</span>
+                        }
+                        else
+                        {
+                            <span class="salla-price">
+                                <span>@Model.price.ToString("N0")</span>
+                                <span class="salla-price-currency">ريال يمني</span>
+                            </span>
+                        }
+                    </div>
+
+                    <!-- Views count -->
+                    <span class="text-muted small d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span>@Model.viewsCount</span>
+                    </span>
+                </div>
+
+                <!-- Seller Meta -->
+                <div class="d-flex align-items-center justify-content-between pt-1">
+                    <div class="d-flex align-items-center gap-1 text-truncate" style="font-size: 0.74rem;">
+                        <span class="text-muted text-truncate" style="max-width: 100px;">@Model.sellerName</span>
+                        @if (Model.sellerIsVerified)
+                        {
+                            <span class="salla-verified-badge" title="طالب موثق رسمياً">✓</span>
+                        }
+                    </div>
+
+                    <span class="text-muted" style="font-size: 0.68rem;">@Model.createdAt.ToString("MM/dd")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

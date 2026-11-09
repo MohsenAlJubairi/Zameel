@@ -1,0 +1,10 @@
+/* Salla Theme Scoped Overrides */
+a {
+    color: var(--salla-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: var(--salla-mint);
+}

@@ -1,0 +1,64 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "إنشاء حساب طالب";
+}
+
+<div class="row justify-content-center py-3">
+    <div class="col-12 col-md-7 col-lg-5">
+        <div class="text-center mb-4">
+            <a href="/" class="salla-brand justify-content-center text-decoration-none">
+                <span class="fs-2">زميل</span>
+                <span class="salla-brand-dot fs-1">.</span>
+            </a>
+            <h5 class="fw-bold mt-2" style="color: var(--salla-primary);">انضم إلى سوق الحرم الجامعي 🎓</h5>
+            <p class="text-muted small">تسجيل سريع وسهل في أقل من نصف دقيقة لبدء البيع والشراء والتبادل.</p>
+        </div>
+
+        <div class="card salla-card p-3 p-md-4 shadow-sm mb-3">
+            @if (!string.IsNullOrEmpty(Model.errorMessage))
+            {
+                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                    ⚠️ @Model.errorMessage
+                </div>
+            }
+
+            <form method="post" asp-action="Register">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@Model.returnUrl" />
+
+                <!-- Full Name -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small" style="color: var(--salla-primary);">الاسم الكامل <span class="text-danger">*</span></label>
+                    <input type="text" name="fullName" value="@Model.fullName" class="form-control rounded-3" placeholder="مثال: أحمد محمد القحطاني" required autofocus />
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small" style="color: var(--salla-primary);">البريد الإلكتروني <span class="text-danger">*</span></label>
+                    <input type="email" name="email" value="@Model.email" class="form-control rounded-3" placeholder="بريدك الإلكتروني (لاستلام رمز الدخول)" required />
+                    <span class="text-muted" style="font-size: 0.74rem;">سنرسل لك رمز الدخول التلقائي OTP على هذا البريد.</span>
+                </div>
+
+                <!-- Phone -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small" style="color: var(--salla-primary);">رقم الهاتف / الواتساب <span class="text-danger">*</span></label>
+                    <input type="tel" name="phone" value="@Model.phone" class="form-control rounded-3" placeholder="مثال: 05xxxxxxxx أو 77xxxxxxx" required />
+                    <span class="text-muted" style="font-size: 0.74rem;">للتواصل المباشر مع الزملاء عند الاتفاق واستلام المستلزمات داخل الحرم.</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-salla-mint w-100 justify-content-center py-2 fs-6 mb-3 shadow-xs">
+                    <span>إتمام التسجيل والبدء فوراً</span>
+                    <span>✓</span>
+                </button>
+            </form>
+
+            <div class="text-center pt-3 border-top">
+                <span class="text-muted small">لديك حساب مسجل بالفعل؟</span>
+                <a asp-action="Login" asp-route-returnUrl="@Model.returnUrl" class="fw-bold text-decoration-none ms-1" style="color: var(--salla-primary);">
+                    تسجيل الدخول مباشرة
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

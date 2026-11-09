@@ -1,0 +1,250 @@
+@model AdminFacultyDetailDto
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"إدارة تخصصات {Model.name}";
+}
+
+<!-- Breadcrumb -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <a href="/Admin/Faculties" class="btn btn-sm btn-light border rounded-pill px-3">
+            ← العودة لدليل الكليات
+        </a>
+        <span class="text-muted small">/</span>
+        <span class="fw-bold small" style="color: var(--salla-primary);">@Model.name</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editFacultyModal">
+            ✏️ تعديل اسم الكلية
+        </button>
+        <button type="button" class="btn-salla-mint btn-sm px-3" data-bs-toggle="modal" data-bs-target="#linkMajorModal">
+            ➕ ربط تخصص أكاديمي
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ✅ @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+        ⚠️ @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Faculty Info Header Card -->
+<div class="card salla-card p-3 mb-3 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, var(--salla-mint-soft) 100%);">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-white border shadow-xs d-flex align-items-center justify-content-center fw-bold" 
+                 style="width: 58px; height: 58px; font-size: 1.6rem; color: var(--salla-mint);">
+                🎓
+            </div>
+            <div>
+                <h4 class="fw-bold m-0 d-flex align-items-center gap-2">
+                    <span>@Model.name</span>
+                    @if (Model.isActive)
+                    {
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0" style="font-size: 0.7rem;">نشطة ✓</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0" style="font-size: 0.7rem;">معطلة ✕</span>
+                    }
+                </h4>
+                <div class="text-muted small mt-1">
+                    <span>المعرف: <code class="text-muted">@Model.slug</code></span>
+                    <span class="mx-2">•</span>
+                    <span>🏛️ معتمدة في: <strong>@Model.universitiesCount جامعات</strong></span>
+                    <span class="mx-2">•</span>
+                    <span>📚 التخصصات: <strong>@Model.majors.Count</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Linked Majors Section -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h5 class="fw-bold m-0" style="color: var(--salla-primary);">📚 التخصصات التابعة لهذه الكلية (@Model.majors.Count)</h5>
+        <span class="text-muted small">التخصصات المتاحة للطلاب لاختيارها عند التسجيل ونشر المواد والمقررات.</span>
+    </div>
+</div>
+
+<div class="admin-table-card">
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>اسم التخصص</th>
+                    <th>المعرف البرمجي</th>
+                    <th>الحالة</th>
+                    <th class="text-end">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.majors.Count > 0)
+                {
+                    @foreach (var m in Model.majors)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-5">📖</span>
+                                    <span class="fw-bold text-dark">@m.name</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-muted border font-monospace px-2 py-1">@m.slug</span>
+                            </td>
+                            <td>
+                                @if (m.isActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0">نشط ✓</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-pill px-2 py-0">معطل</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <form method="post" action="/admin/faculties/unlink-major" class="d-inline" onsubmit="return confirm('هل أنت متأكد من فك ارتباط هذا التخصص بهذه الكلية؟');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="facultyId" value="@Model.id" />
+                                    <input type="hidden" name="majorId" value="@m.id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                        فك الارتباط ✕
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <span class="fs-1 d-block mb-2">📚</span>
+                            <span>لم يتم ربط أي تخصصات بهذه الكلية حتى الآن. انقر على زر "ربط تخصص أكاديمي" لإضافة التخصصات.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Edit Faculty -->
+<div class="modal fade" id="editFacultyModal" tabindex="-1" aria-labelledby="editFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="editFacultyModalLabel" style="color: var(--salla-primary);">✏️ تعديل بيانات الكلية</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/admin/faculties/update">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.id" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اسم الكلية القياسي</label>
+                        <input type="text" name="name" value="@Model.name" class="form-control rounded-3" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" style="color: var(--salla-primary);">المعرف البرمجي (Slug)</label>
+                        <input type="text" name="slug" value="@Model.slug" class="form-control rounded-3 font-monospace" required />
+                    </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="isActive" value="true" id="facActiveSwitch" @(Model.isActive ? "checked" : "") />
+                        <label class="form-check-label fw-semibold small" for="facActiveSwitch">الكلية نشطة في الدليل العام</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn-salla-mint px-4 py-2">حفظ التغييرات ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Link Major to Faculty -->
+<div class="modal fade" id="linkMajorModal" tabindex="-1" aria-labelledby="linkMajorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold" id="linkMajorModalLabel" style="color: var(--salla-primary);">➕ ربط تخصص بكلية @Model.name</h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <ul class="nav nav-pills p-3 pb-0" id="majorTabs" role="tablist">
+                <li class="nav-item flex-grow-1" role="presentation">
+                    <button class="nav-link active w-100 rounded-pill small py-1" id="existing-tab" data-bs-toggle="pill" data-bs-target="#existingTabContent" type="button" role="tab">
+                        من التخصصات المتاحة
+                    </button>
+                </li>
+                <li class="nav-item flex-grow-1" role="presentation">
+                    <button class="nav-link w-100 rounded-pill small py-1" id="new-tab" data-bs-toggle="pill" data-bs-target="#newTabContent" type="button" role="tab">
+                        إنشاء تخصص جديد
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Tab 1: Existing Major -->
+                <div class="tab-pane fade show active" id="existingTabContent" role="tabpanel">
+                    <form method="post" action="/admin/faculties/link-major">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="facultyId" value="@Model.id" />
+                        <div class="modal-body p-4 pt-2">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اختر التخصص <span class="text-danger">*</span></label>
+                                <select name="majorId" class="form-select rounded-3" required>
+                                    <option value="">-- اختر تخصصاً لربطه بهذه الكلية --</option>
+                                    @foreach (var m in Model.availableMajorsToLink)
+                                    {
+                                        <option value="@m.id">@m.name (@m.slug)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top pt-3">
+                            <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="submit" class="btn-salla-mint px-4 py-2">ربط التخصص بالكلية ✓</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 2: Create New Major Directly -->
+                <div class="tab-pane fade" id="newTabContent" role="tabpanel">
+                    <form method="post" action="/admin/majors/add">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnToFacultyId" value="@Model.id" />
+                        <div class="modal-body p-4 pt-2">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small" style="color: var(--salla-primary);">اسم التخصص الجديد <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control rounded-3" placeholder="مثال: ذكاء اصطناعي وتنقيب بيانات" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small" style="color: var(--salla-primary);">المعرف البرمجي (Slug)</label>
+                                <input type="text" name="slug" class="form-control rounded-3 font-monospace" placeholder="مثال: artificial-intelligence" />
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top pt-3">
+                            <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="submit" class="btn-salla-mint px-4 py-2">إنشاء وربط التخصص تلقائياً ✓</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

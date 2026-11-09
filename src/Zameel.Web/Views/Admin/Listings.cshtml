@@ -1,0 +1,166 @@
+@model PagedResult<AdminListingItemDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "مراقبة وإدارة الإعلانات";
+    var universities = ViewBag.Universities as List<UniversityDto> ?? new();
+    Guid? currentUni = ViewBag.CurrentUniversityId;
+    ListingStatus? currentStatus = ViewBag.CurrentStatus;
+}
+
+<div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: var(--salla-primary);">إدارة الإعلانات والمحتوى 🏷️</h5>
+            <p class="text-muted small mb-0">مراقبة المعروض في الجامعات وتغيير الحالات أو إخفاء المحتوى المخالف.</p>
+        </div>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+            إجمالي السجلات: @(Model?.totalCount ?? 0)
+        </span>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" action="/Admin/Listings" class="row g-2 mb-4 bg-light p-3 rounded-3">
+        <div class="col-12 col-md-4">
+            <select name="universityId" class="form-select form-select-sm">
+                <option value="">كافة الجامعات</option>
+                @foreach (var uni in universities)
+                {
+                    <option value="@uni.id" selected="@(currentUni == uni.id)">@uni.name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">كافة الحالات</option>
+                <option value="1" selected="@(currentStatus == ListingStatus.Active)">نشط (Active)</option>
+                <option value="2" selected="@(currentStatus == ListingStatus.PendingConfirmation)">بانتظار التأكيد (Pending)</option>
+                <option value="3" selected="@(currentStatus == ListingStatus.Sold)">مباع (Sold)</option>
+                <option value="4" selected="@(currentStatus == ListingStatus.Expired)">منتهي (Expired)</option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-salla-primary flex-grow-1">تطبيق الفلترة</button>
+            <a href="/Admin/Listings" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+        </div>
+    </form>
+
+    @if (Model != null && Model.items.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>عنوان الإعلان</th>
+                        <th>السعر والنوع</th>
+                        <th>الجامعة / الكلية</th>
+                        <th>البائع</th>
+                        <th>الحالة</th>
+                        <th>المشاهدات</th>
+                        <th class="text-center">إجراءات الإدارة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.items)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/Listings/Details/@l.id" target="_blank" class="fw-bold text-dark text-decoration-none hover-primary text-truncate d-block" style="max-width: 200px;">
+                                    @l.title ↗
+                                </a>
+                                <span class="text-muted small">@l.createdAt.ToString("yyyy/MM/dd")</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold" style="color: var(--salla-primary);">@l.price.ToString("N0") ريال يمني</div>
+                                <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">@l.type</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@l.universityName</div>
+                                <div class="text-muted small">@l.facultyName</div>
+                            </td>
+                            <td>
+                                <div>@l.sellerName</div>
+                            </td>
+                            <td>
+                                @if (l.status == ListingStatus.Active)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">نشط</span>
+                                }
+                                else if (l.status == ListingStatus.Sold)
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded-pill">مباع</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning border px-2 py-1 rounded-pill">@l.status</span>
+                                }
+                            </td>
+                            <td>👁️ @l.viewsCount</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    @if (l.status == ListingStatus.Active)
+                                    {
+                                        <form method="post" action="/Admin/ToggleListingStatus" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="listingId" value="@l.id" />
+                                            <input type="hidden" name="newStatus" value="@ListingStatus.Sold" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2" title="تحويل لمباع">
+                                                تمييز كمباع
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" action="/Admin/ToggleListingStatus" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="listingId" value="@l.id" />
+                                            <input type="hidden" name="newStatus" value="@ListingStatus.Active" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="إعادة تنشيط">
+                                                إعادة تنشيط
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <form method="post" action="/Admin/DeleteListing" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@l.id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" onclick="return confirm('هل أنت متأكد من حذف هذا الإعلان منطقياً؟')" title="حذف الإعلان">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.totalPages > 1)
+        {
+            <div class="d-flex justify-content-center align-items-center gap-2 mt-4 pt-2 border-top">
+                @if (Model.hasPreviousPage)
+                {
+                    <a href="/Admin/Listings?universityId=@currentUni&status=@((int?)currentStatus)&page=@(Model.page - 1)" class="btn btn-sm btn-outline-secondary px-3">
+                        ← السابق
+                    </a>
+                }
+                <span class="small text-muted fw-semibold px-2">صفحة @Model.page من @Model.totalPages</span>
+                @if (Model.hasNextPage)
+                {
+                    <a href="/Admin/Listings?universityId=@currentUni&status=@((int?)currentStatus)&page=@(Model.page + 1)" class="btn btn-sm btn-salla-primary px-3">
+                        التالي →
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted small">
+            لا توجد إعلانات مطابقة لمعايير البحث.
+        </div>
+    }
+</div>

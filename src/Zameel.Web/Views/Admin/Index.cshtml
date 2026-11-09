@@ -1,0 +1,382 @@
+@model AdminDashboardStatsDto
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "المؤشرات والإحصائيات الحية";
+}
+
+<!-- 1. Executive Welcome & Campus Pulse Banner -->
+<div class="card p-4 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, var(--brand-midnight) 0%, #1e1b40 100%); border-radius: var(--radius-xl); color: #ffffff;">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="campus-pulse-dot"></span>
+                <span class="text-uppercase fw-semibold" style="color: var(--brand-mint); font-size: 0.76rem; letter-spacing: 0.5px;">مركز القيادة والمراقبة الحية</span>
+            </div>
+            <h4 class="fw-bold mb-1" style="">لوحة مؤشرات سوق الحرم الجامعي</h4>
+            <p class="text-white-50 m-0 small" style="max-width: 620px;">
+                متابعة حركة تبادل المستلزمات الأكاديمية بين الطلاب، اعتماد طلبات التوثيق الأكاديمي، وإدارة نزاهة السوق يداً بيد.
+            </p>
+        </div>
+
+        <!-- Quick Summary Indicators -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="px-3 py-2 rounded-3 border border-white border-opacity-10" style="background: rgba(255, 255, 255, 0.05);">
+                <span class="text-white-50 d-block" style="font-size: 0.7rem;">الصفقات المكتملة</span>
+                <span class="fw-bold fs-5" style="color: var(--brand-mint); ">@Model?.totalDealsConfirmed</span>
+            </div>
+            <div class="px-3 py-2 rounded-3 border border-white border-opacity-10" style="background: rgba(255, 255, 255, 0.05);">
+                <span class="text-white-50 d-block" style="font-size: 0.7rem;">الطلاب الموثقون</span>
+                <span class="fw-bold fs-5" style="color: var(--brand-cyan); ">@Model?.totalVerifiedStudents</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Bento KPI Metric Cards -->
+<div class="row g-3 mb-4">
+    <!-- Active Listings -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">المستلزمات النشطة</span>
+                <div class="kpi-icon-wrap" style="background: rgba(19, 17, 43, 0.08); color: var(--brand-midnight);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                        <path d="M6 6h10"></path>
+                        <path d="M6 10h10"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-midnight); ">@Model?.totalActiveListings</h3>
+            <span class="text-muted" style="font-size: 0.72rem;">معروض للبيع • تبرع • مطلوب</span>
+        </div>
+    </div>
+
+    <!-- Pending Verifications -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100 @(Model?.pendingVerificationsCount > 0 ? "border-warning" : "")">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">توثيقات معلقة</span>
+                <div class="kpi-icon-wrap" style="background: rgba(255, 184, 0, 0.15); color: #b76e00;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-warning" style="">@Model?.pendingVerificationsCount</h3>
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted" style="font-size: 0.72rem;">تتطلب مراجعة القيد</span>
+                @if (Model?.pendingVerificationsCount > 0)
+                {
+                    <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning" style="font-size: 0.65rem;">مطلوب فحص</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Sold Reports -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100 @(Model?.pendingSoldReportsCount > 0 ? "border-danger" : "")">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">بلاغات مباعة</span>
+                <div class="kpi-icon-wrap" style="background: rgba(239, 68, 68, 0.12); color: #dc2626;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                        <line x1="4" y1="22" x2="4" y2="15"></line>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-danger" style="">@Model?.pendingSoldReportsCount</h3>
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted" style="font-size: 0.72rem;">أبلغ طالبان فأكثر</span>
+                @if (Model?.pendingSoldReportsCount > 0)
+                {
+                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger" style="font-size: 0.65rem;">تحديث السوق</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Students -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">طلاب موثقون</span>
+                <div class="kpi-icon-wrap" style="background: rgba(0, 194, 255, 0.12); color: var(--brand-cyan);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-cyan); ">@Model?.totalVerifiedStudents</h3>
+            <span class="text-muted" style="font-size: 0.72rem;">شارة التوثيق (كوتا 5 إعلانات)</span>
+        </div>
+    </div>
+
+    <!-- Confirmed Deals -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">صفقات ناجحة</span>
+                <div class="kpi-icon-wrap" style="background: rgba(0, 229, 163, 0.15); color: #087550;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 7.65l.77.78L12 20.66l7.65-7.65.77-.78a5.4 5.4 0 0 0 0-7.65z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1" style="color: #087550; ">@Model?.totalDealsConfirmed</h3>
+            <span class="text-muted" style="font-size: 0.72rem;">تسليم مباشر يداً بيد</span>
+        </div>
+    </div>
+
+    <!-- Total Students -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="kpi-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">طلاب المنصة</span>
+                <div class="kpi-icon-wrap" style="background: rgba(19, 17, 43, 0.08); color: var(--brand-midnight);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1" style="color: var(--brand-midnight); ">@Model?.totalUsers</h3>
+            <span class="text-muted" style="font-size: 0.72rem;">المسجلين في كافة الجامعات</span>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Admin Quick Operation Bar -->
+<div class="card p-3 mb-4 border-0 shadow-sm bg-white" style="border-radius: var(--radius-lg);">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                 style="width: 36px; height: 36px; background: rgba(0, 229, 163, 0.15); color: var(--brand-midnight);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+            </div>
+            <div>
+                <span class="fw-bold small d-block" style="color: var(--brand-midnight);">الوصول السريع والإجراءات التنفيذية</span>
+                <span class="text-muted" style="font-size: 0.74rem;">اختصارات سريعة لإدارة المحتوى والتحقق الأكاديمي</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="/Admin/Verifications" class="btn btn-sm btn-outline-dark rounded-pill px-3 d-inline-flex align-items-center gap-1">
+                <span>فحص التوثيقات</span>
+                @if (Model?.pendingVerificationsCount > 0)
+                {
+                    <span class="badge rounded-pill bg-warning text-dark">@Model.pendingVerificationsCount</span>
+                }
+            </a>
+            <a href="/Admin/SoldReports" class="btn btn-sm btn-outline-danger rounded-pill px-3 d-inline-flex align-items-center gap-1">
+                <span>بلاغات البيع</span>
+                @if (Model?.pendingSoldReportsCount > 0)
+                {
+                    <span class="badge rounded-pill bg-danger text-white">@Model.pendingSoldReportsCount</span>
+                }
+            </a>
+            <a href="/Admin/Universities" class="btn btn-sm btn-light border rounded-pill px-3">دليل الجامعات</a>
+            <a href="/Admin/Faculties" class="btn btn-sm btn-light border rounded-pill px-3">الكليات والتخصصات</a>
+            <a href="/Admin/Stores" class="btn btn-sm btn-light border rounded-pill px-3">المكتبات الشريكة</a>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Interactive Operational Queues (Verifications & Sold Reports) -->
+<div class="row g-4">
+    <!-- Queue 1: Pending Student Verifications -->
+    <div class="col-12 col-xl-6">
+        <div class="bg-white rounded-4 border p-3 p-md-4 shadow-sm h-100" style="border-radius: var(--radius-xl) !important;">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 34px; height: 34px; background: rgba(255, 184, 0, 0.15); color: #b76e00;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <polyline points="17 11 19 13 23 9"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color: var(--brand-midnight); ">طلبات توثيق القيد الأكاديمي</h6>
+                        <span class="text-muted" style="font-size: 0.74rem;">أحدث طلبات إثبات الهوية الجامعية لرفع الكوتا</span>
+                    </div>
+                </div>
+                <a href="/Admin/Verifications" class="btn btn-sm btn-outline-dark rounded-pill px-3" style="font-size: 0.78rem;">
+                    عرض الكل (@Model?.pendingVerificationsCount)
+                </a>
+            </div>
+
+            @if (Model?.recentVerifications.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>الطالب</th>
+                                <th>الجامعة والكلية</th>
+                                <th>رقم القيد الجامعي</th>
+                                <th class="text-center">الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in Model.recentVerifications)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold text-dark">@v.fullName</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">@v.email</div>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 140px; font-weight: 500;">@v.universityName</div>
+                                        <div class="text-muted small">@(string.IsNullOrEmpty(v.facultyName) ? "كافة الكليات" : v.facultyName)</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border font-monospace px-2 py-1" style="font-size: 0.78rem;">
+                                            @(v.studentRegNo ?? "غير محدد")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <form method="post" action="/Admin/ApproveVerification" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@v.userId" />
+                                                <button type="submit" class="btn btn-sm btn-salla-mint py-1 px-3 d-inline-flex align-items-center gap-1 shadow-xs" title="اعتماد وتوثيق الحساب">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    <span>اعتماد</span>
+                                                </button>
+                                            </form>
+                                            <form method="post" action="/Admin/RejectVerification" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@v.userId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="رفض القيد">
+                                                    رفض
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                         style="width: 52px; height: 52px; background: rgba(0, 229, 163, 0.12); color: var(--brand-mint);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="fw-bold text-dark small">جميع طلبات التوثيق معتمدة</div>
+                    <span class="text-muted" style="font-size: 0.76rem;">لا توجد طلبات قيد جامعي معلقة تحتاج للمراجعة حالياً.</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Queue 2: Urgent Sold Reports -->
+    <div class="col-12 col-xl-6">
+        <div class="bg-white rounded-4 border p-3 p-md-4 shadow-sm h-100" style="border-radius: var(--radius-xl) !important;">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 34px; height: 34px; background: rgba(239, 68, 68, 0.12); color: #dc2626;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                            <line x1="4" y1="22" x2="4" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color: var(--brand-midnight); ">بلاغات المستلزمات المباعة</h6>
+                        <span class="text-muted" style="font-size: 0.74rem;">إعلانات أبلغ الزملاء عن بيعها لتحديث بيانات السوق</span>
+                    </div>
+                </div>
+                <a href="/Admin/SoldReports" class="btn btn-sm btn-outline-danger rounded-pill px-3" style="font-size: 0.78rem;">
+                    عرض الكل (@Model?.pendingSoldReportsCount)
+                </a>
+            </div>
+
+            @if (Model?.recentSoldReports.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>المستلزم</th>
+                                <th>البائع</th>
+                                <th>البلاغات</th>
+                                <th class="text-center">إجراء الإغلاق</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.recentSoldReports)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/Listings/Details/@r.listingId" target="_blank" class="fw-semibold text-dark text-decoration-none text-truncate d-block" style="max-width: 160px;">
+                                            @r.title
+                                        </a>
+                                        <div class="text-muted small">@r.price.ToString("N0") ريال يمني</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">@r.sellerName</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">@r.sellerEmail</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger px-2 py-1">
+                                            @r.reportedSoldCount بلاغات
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <form method="post" action="/Admin/ConfirmSold" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="listingId" value="@r.listingId" />
+                                                <button type="submit" class="btn btn-sm btn-danger py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" title="تأكيد البيع وإخفاء المستلزم">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    <span>تأكيد كمباع</span>
+                                                </button>
+                                            </form>
+                                            <form method="post" action="/Admin/DismissSoldReports" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="listingId" value="@r.listingId" />
+                                                <button type="submit" class="btn btn-sm btn-light border py-1 px-2" title="تجاهل البلاغات">
+                                                    تجاهل
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                         style="width: 52px; height: 52px; background: rgba(0, 194, 255, 0.12); color: var(--brand-cyan);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <polyline points="9 12 11 14 15 10"></polyline>
+                        </svg>
+                    </div>
+                    <div class="fw-bold text-dark small">السوق الجامعي نشط ونظيف</div>
+                    <span class="text-muted" style="font-size: 0.76rem;">لا توجد بلاغات مستلزمات مباعة تحتاج للتدخل حالياً.</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
