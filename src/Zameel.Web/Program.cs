@@ -32,6 +32,9 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
     });
 
+// 4. Real-time Campus Messaging (SignalR - Built-in .NET)
+builder.Services.AddSignalR();
+
 // 4. Rate Limiter (KISS Security for OTP & Comments spam protection)
 builder.Services.AddRateLimiter(options =>
 {
@@ -86,6 +89,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapHub<Zameel.Web.Hubs.ChatHub>("/hubs/chat");
 
 app.MapControllerRoute(
     name: "default",

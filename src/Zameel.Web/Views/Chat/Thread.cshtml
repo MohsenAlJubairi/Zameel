@@ -1,0 +1,268 @@
+@model ChatThreadViewModel
+@{
+    ViewData["Title"] = $"محادثة مع {Model.otherUserName} - زميل";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+        <!-- Outer Chat Card (Concentric: Layout -> Spacing -> Typography -> Visuals) -->
+        <div class="chat-container d-flex flex-column border shadow-sm">
+            
+            <!-- 1. Top Header Bar -->
+            <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-white" style="z-index: 5;">
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="Chat" asp-action="Index" class="btn btn-sm btn-light rounded-circle p-2 d-flex align-items-center justify-content-center text-decoration-none shadow-xs" style="width: 36px; height: 36px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </a>
+
+                    <div class="position-relative flex-shrink-0">
+                        @if (!string.IsNullOrEmpty(Model.otherUserAvatarUrl))
+                        {
+                            <img src="@Model.otherUserAvatarUrl" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;" alt="@Model.otherUserName" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white shadow-xs"
+                                 style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--brand-midnight) 0%, #2a2559 100%); font-size: 1.1rem;">
+                                @(string.IsNullOrEmpty(Model.otherUserName) ? "ز" : Model.otherUserName.Substring(0, 1))
+                            </div>
+                        }
+                        @if (Model.otherUserIsVerified)
+                        {
+                            <span class="position-absolute bottom-0 end-0 rounded-circle border border-white d-flex align-items-center justify-content-center" 
+                                  style="width: 14px; height: 14px; background-color: var(--brand-cyan); font-size: 0.55rem; color: #ffffff;">✓</span>
+                        }
+                    </div>
+
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-1" style="font-size: 0.95rem;">
+                            <span>@Model.otherUserName</span>
+                            @if (Model.otherUserIsVerified)
+                            {
+                                <span class="badge rounded-pill badge-cyan-verified px-2 py-0" style="font-size: 0.65rem;">موثق ✓</span>
+                            }
+                        </h6>
+                        <span class="text-success small d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                            <span class="rounded-circle d-inline-block bg-success" style="width: 7px; height: 7px;"></span>
+                            تواصل مباشر في الحرم
+                        </span>
+                    </div>
+                </div>
+
+                @if (Model.listingId.HasValue)
+                {
+                    <a asp-controller="Listings" asp-action="Details" asp-route-id="@Model.listingId" 
+                       class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 text-decoration-none shadow-xs" 
+                       style="font-size: 0.78rem;" target="_blank">
+                        📄 معاينة السلعة
+                    </a>
+                }
+            </div>
+
+            <!-- 2. Contextual Item Mini-Pill (If chatting about a specific book/device) -->
+            @if (Model.listingId.HasValue && !string.IsNullOrEmpty(Model.listingTitle))
+            {
+                <div class="p-2 px-3 border-bottom d-flex align-items-center justify-content-between gap-2"
+                     style="background: #fafaf8;">
+                    <div class="d-flex align-items-center gap-2 text-truncate">
+                        @if (!string.IsNullOrEmpty(Model.listingImageUrl))
+                        {
+                            <img src="@Model.listingImageUrl" class="rounded-2 border flex-shrink-0" style="width: 36px; height: 36px; object-fit: cover;" alt="@Model.listingTitle" />
+                        }
+                        else
+                        {
+                            <div class="rounded-2 border d-flex align-items-center justify-content-center flex-shrink-0 p-1" style="width: 36px; height: 36px; background: #f1f0eb;">
+                                <img src="~/images/zameel-brand-icon.png" style="width: 24px; height: 24px; object-fit: contain;" alt="شعار زميل" />
+                            </div>
+                        }
+                        <div class="text-truncate">
+                            <span class="text-muted d-block" style="font-size: 0.7rem;">بخصوص المستلزم:</span>
+                            <span class="fw-bold text-dark text-truncate d-block small" style="font-size: 0.82rem;">@Model.listingTitle</span>
+                        </div>
+                    </div>
+
+                    <div class="text-end flex-shrink-0">
+                        <span class="fw-bold small" style="color: var(--brand-midnight); font-size: 0.85rem;">
+                            @(Model.listingPrice > 0 ? $"{Model.listingPrice:N0} ريال" : "تبرع مجاني")
+                        </span>
+                    </div>
+                </div>
+            }
+
+            <!-- 3. Message Stream (Scrollable) -->
+            <div class="p-3 d-flex flex-column gap-2 flex-grow-1 overflow-auto" id="messagesStream" style="min-height: 380px; max-height: 520px; background-color: var(--brand-alabaster);">
+                @if (Model.messages != null && Model.messages.Count > 0)
+                {
+                    @foreach (var msg in Model.messages)
+                    {
+                        <div class="d-flex flex-column @(msg.isMine ? "align-items-start" : "align-items-end")">
+                            <div class="@(msg.isMine ? "chat-bubble-me" : "chat-bubble-other")">
+                                <p class="mb-1" style="white-space: pre-wrap; word-break: break-word;">@msg.content</p>
+                                <div class="d-flex align-items-center justify-content-end gap-1 opacity-75" style="font-size: 0.65rem;">
+                                    <span>@msg.createdAt.ToString("hh:mm tt")</span>
+                                    @if (msg.isMine)
+                                    {
+                                        <span title="@(msg.isRead ? "تمت القراءة" : "تم الإرسال")">@(msg.isRead ? "✓✓" : "✓")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 py-5 text-center text-muted" id="emptyPlaceholder">
+                        <span class="fs-1 mb-2">👋</span>
+                        <h6 class="fw-bold mb-1">ابدأ المحادثة الآن</h6>
+                        <span class="small" style="font-size: 0.8rem;">اتفق مع زميلك على مكان ووقت التسليم داخل الحرم الجامعي</span>
+                    </div>
+                }
+            </div>
+
+            <!-- 4. Bottom Input Bar -->
+            <form id="chatForm" class="chat-input-bar d-flex align-items-center gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="receiverId" value="@Model.otherUserId" />
+                <input type="hidden" id="listingId" value="@(Model.listingId?.ToString() ?? "")" />
+
+                <input type="text" id="messageInput" class="form-control rounded-pill px-3 py-2 border shadow-none" 
+                       placeholder="اكتب رسالتك لزميلك..." 
+                       autocomplete="off" required style="font-size: 0.92rem;" />
+
+                <button type="submit" id="sendBtn" class="btn-salla-mint rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0 shadow-xs"
+                        style="width: 42px; height: 42px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<!-- SignalR Library (Standard CDN or Local fallback) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script>
+    const stream = document.getElementById('messagesStream');
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const receiverId = document.getElementById('receiverId').value;
+    const listingId = document.getElementById('listingId').value;
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+    function scrollToBottom() {
+        if (stream) {
+            stream.scrollTop = stream.scrollHeight;
+        }
+    }
+    scrollToBottom();
+
+    // Setup SignalR Connection
+    let connection = null;
+    if (typeof signalR !== 'undefined') {
+        connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/chat")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveMessage", function (msg) {
+            const emptyPlaceholder = document.getElementById('emptyPlaceholder');
+            if (emptyPlaceholder) emptyPlaceholder.remove();
+
+            const isMine = msg.senderId.toLowerCase() === '@Model.currentUserId'.toLowerCase();
+            const bubbleClass = isMine ? 'chat-bubble-me' : 'chat-bubble-other';
+            const alignClass = isMine ? 'align-items-start' : 'align-items-end';
+            const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const row = document.createElement('div');
+            row.className = `d-flex flex-column ${alignClass}`;
+            row.innerHTML = `
+                <div class="${bubbleClass}">
+                    <p class="mb-1" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(msg.content)}</p>
+                    <div class="d-flex align-items-center justify-content-end gap-1 opacity-75" style="font-size: 0.65rem;">
+                        <span>${timeStr}</span>
+                        ${isMine ? '<span>✓</span>' : ''}
+                    </div>
+                </div>
+            `;
+            stream.appendChild(row);
+            scrollToBottom();
+        });
+
+        connection.start().then(function () {
+            connection.invoke("JoinConversation", receiverId).catch(console.error);
+        }).catch(console.error);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    // Form Submit (AJAX fallback ensures zero loss of messages)
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        sendBtn.disabled = true;
+        messageInput.value = '';
+
+        try {
+            const res = await fetch('/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({
+                    receiverId: receiverId,
+                    listingId: listingId ? listingId : null,
+                    content: content
+                })
+            });
+
+            const data = await res.json();
+            if (data.isSuccess) {
+                // If SignalR is active, the hub broadcasts to room. If not, append locally:
+                if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+                    const emptyPlaceholder = document.getElementById('emptyPlaceholder');
+                    if (emptyPlaceholder) emptyPlaceholder.remove();
+
+                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const row = document.createElement('div');
+                    row.className = 'd-flex flex-column align-items-start';
+                    row.innerHTML = `
+                        <div class="chat-bubble-me">
+                            <p class="mb-1" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(content)}</p>
+                            <div class="d-flex align-items-center justify-content-end gap-1 opacity-75" style="font-size: 0.65rem;">
+                                <span>${timeStr}</span>
+                                <span>✓</span>
+                            </div>
+                        </div>
+                    `;
+                    stream.appendChild(row);
+                    scrollToBottom();
+                }
+            } else {
+                alert(data.message || 'تعذر إرسال الرسالة.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('حدث خطأ في الاتصال.');
+        } finally {
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+    });
+</script>
+}

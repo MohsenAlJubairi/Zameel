@@ -38,6 +38,12 @@ public static class AppMessages
     public const string CommentDeletedSuccess = "تم حذف التعليق بنجاح.";
     public const string CommentContentRequired = "يرجى كتابة نص التعليق أو الاستفسار أولاً.";
 
+    // Chat & Messaging
+    public const string MessageSentSuccess = "تم إرسال الرسالة بنجاح.";
+    public const string MessageContentRequired = "يرجى كتابة نص الرسالة أولاً.";
+    public const string CannotMessageSelf = "لا يمكنك إرسال رسالة إلى نفسك.";
+    public const string ReceiverNotFound = "المستخدم المستلم غير موجود أو حسابه غير مفعل.";
+
     // Deals & Reviews
     public const string DealConfirmedSuccess = "تم تأكيد إتمام المعاملة بنجاح، يمكنك الآن تقييم زميلك.";
     public const string ReviewSubmittedSuccess = "شكراً لتقييمك! تقييماتك تعزز ثقة وأمان مجتمع زميل الجامعي.";

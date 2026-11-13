@@ -1,0 +1,130 @@
+@model List<ConversationSummaryDto>
+@{
+    ViewData["Title"] = "الرسائل والمحادثات - زميل";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        
+        <!-- Header Bar (Concentric: Layout -> Spacing -> Typography -> Visuals) -->
+        <div class="d-flex align-items-center justify-content-between p-3 mb-3 bg-white rounded-4 border shadow-xs">
+            <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                     style="width: 44px; height: 44px; background: rgba(0, 229, 163, 0.12); color: var(--brand-mint);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">محادثات الحرم الجامعي</h5>
+                    <span class="text-muted small" style="font-size: 0.76rem;">تواصل مباشر يداً بيد مع الطلاب والمكتبات</span>
+                </div>
+            </div>
+
+            @{
+                var totalUnread = Model.Sum(c => c.unreadCount);
+            }
+            @if (totalUnread > 0)
+            {
+                <span class="badge rounded-pill px-2 py-1 shadow-xs" 
+                      style="background-color: var(--brand-mint); color: var(--brand-midnight); font-weight: 700; font-size: 0.75rem;">
+                    @totalUnread غير مقروءة
+                </span>
+            }
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-xs">
+                ⚠️ @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Conversations Stream -->
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="d-flex flex-column gap-2">
+                @foreach (var conv in Model)
+                {
+                    <a asp-controller="Chat" asp-action="Thread" asp-route-otherUserId="@conv.otherUserId" 
+                       asp-route-listingId="@conv.lastListingId"
+                       class="conversation-item @(conv.unreadCount > 0 ? "unread" : "")">
+                        
+                        <!-- Right: Avatar & User Info -->
+                        <div class="d-flex align-items-center gap-3 text-truncate flex-grow-1">
+                            <div class="position-relative flex-shrink-0">
+                                @if (!string.IsNullOrEmpty(conv.otherUserAvatarUrl))
+                                {
+                                    <img src="@conv.otherUserAvatarUrl" class="rounded-circle border" style="width: 48px; height: 48px; object-fit: cover;" alt="@conv.otherUserName" />
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white shadow-xs"
+                                         style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--brand-midnight) 0%, #2a2559 100%); font-size: 1.2rem;">
+                                        @(string.IsNullOrEmpty(conv.otherUserName) ? "ز" : conv.otherUserName.Substring(0, 1))
+                                    </div>
+                                }
+                                @if (conv.otherUserIsVerified)
+                                {
+                                    <span class="position-absolute bottom-0 end-0 rounded-circle border border-white d-flex align-items-center justify-content-center" 
+                                          style="width: 16px; height: 16px; background-color: var(--brand-cyan); font-size: 0.6rem; color: #ffffff;" title="موثق">✓</span>
+                                }
+                            </div>
+
+                            <div class="text-truncate flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 0.92rem;">
+                                        @conv.otherUserName
+                                    </h6>
+                                    <span class="text-muted" style="font-size: 0.7rem;">
+                                        @conv.lastMessageTime.ToString("hh:mm tt")
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(conv.lastListingTitle))
+                                {
+                                    <div class="mb-1 text-truncate">
+                                        <span class="badge bg-light border text-dark rounded-pill px-2 py-0" style="font-size: 0.68rem;">
+                                            📦 @conv.lastListingTitle
+                                        </span>
+                                    </div>
+                                }
+
+                                <p class="mb-0 text-truncate @(conv.unreadCount > 0 ? "fw-bold text-dark" : "text-muted")" style="font-size: 0.82rem;">
+                                    @conv.lastMessageContent
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Left: Unread Count Badge -->
+                        @if (conv.unreadCount > 0)
+                        {
+                            <span class="badge rounded-circle d-flex align-items-center justify-content-center ms-2 flex-shrink-0"
+                                  style="width: 22px; height: 22px; background-color: var(--brand-mint); color: var(--brand-midnight); font-weight: 800; font-size: 0.72rem;">
+                                @conv.unreadCount
+                            </span>
+                        }
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Clean Empty State (Concentric: Layout -> Spacing -> Typography -> Visuals) -->
+            <div class="d-flex flex-column align-items-center justify-content-center p-4 py-5 text-center bg-white rounded-4 border shadow-xs">
+                <div class="d-flex align-items-center justify-content-center rounded-circle mb-3 shadow-xs"
+                     style="width: 68px; height: 68px; background: rgba(0, 229, 163, 0.12); color: var(--brand-mint); font-size: 2rem;">
+                    💬
+                </div>
+                <h5 class="fw-bold mb-2 text-dark" style="font-size: 1.1rem;">صندوق الرسائل فارغ</h5>
+                <p class="text-muted small mb-4" style="max-width: 320px; font-size: 0.85rem; line-height: 1.5;">
+                    لم تبدأ أي محادثة بعد. تصفح مستلزمات وكتب زملائك في الحرم الجامعي وتواصل معهم مباشرة يداً بيد.
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="btn-salla-mint px-4 py-2 text-decoration-none shadow-xs">
+                    <span>📚 تصفح سوق الحرم الجامعي</span>
+                </a>
+            </div>
+        }
+
+    </div>
+</div>

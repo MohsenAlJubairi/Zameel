@@ -78,7 +78,7 @@
                 </div>
 
                 <!-- 2. Mandatory Campus Bookstore Drop-off (PUDO Hub) -->
-                @if (Model.isStoreUser)
+                @if (Model?.isStoreUser == true)
                 {
                     <div class="p-3 rounded-4 mb-3" style="background: rgba(0, 229, 163, 0.08); border: 1px solid rgba(0, 229, 163, 0.3);">
                         <div class="d-flex align-items-center gap-2">

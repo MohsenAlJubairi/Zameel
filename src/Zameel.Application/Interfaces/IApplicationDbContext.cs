@@ -23,6 +23,7 @@ public interface IApplicationDbContext
     DbSet<Comment> comments { get; }
     DbSet<Review> reviews { get; }
     DbSet<ListingReport> listingReports { get; }
+    DbSet<ChatMessage> chatMessages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

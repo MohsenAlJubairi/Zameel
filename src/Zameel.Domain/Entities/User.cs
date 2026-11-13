@@ -42,4 +42,6 @@ public class User : BaseEntity
     public ICollection<Review> reviewsGiven { get; set; } = new List<Review>();
     public ICollection<Review> reviewsReceived { get; set; } = new List<Review>();
     public ICollection<ListingReport> reportsSubmitted { get; set; } = new List<ListingReport>();
+    public ICollection<ChatMessage> sentMessages { get; set; } = new List<ChatMessage>();
+    public ICollection<ChatMessage> receivedMessages { get; set; } = new List<ChatMessage>();
 }

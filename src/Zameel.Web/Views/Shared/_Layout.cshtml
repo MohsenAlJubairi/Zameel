@@ -102,6 +102,7 @@
                                     <li><a class="dropdown-item rounded-3 py-2" href="/store">لوحة إدارة المكتبة</a></li>
                                 }
                                 <li><a class="dropdown-item rounded-3 py-2" asp-controller="Profile" asp-action="Index">الملف الأكاديمي والكوتا</a></li>
+                                <li><a class="dropdown-item rounded-3 py-2 d-flex align-items-center justify-content-between" asp-controller="Chat" asp-action="Index"><span>الرسائل والمحادثات</span> 💬</a></li>
                                 <li><hr class="dropdown-divider my-1"></li>
                                 <li><a class="dropdown-item rounded-3 py-2 text-danger" asp-controller="Auth" asp-action="Logout">تسجيل الخروج</a></li>
                             </ul>
@@ -136,10 +137,11 @@
 
         bool isRequestActive = (currentType == "4" || currentType.Equals("Request", System.StringComparison.OrdinalIgnoreCase));
         bool isCreateActive = currentCtrl == "Listings" && currentAct == "Create";
+        bool isChatActive = currentCtrl == "Chat";
         bool isProfileActive = currentCtrl == "Profile";
         bool isAdminActive = currentCtrl == "Admin";
         bool isStoreActive = currentCtrl == "Store";
-        bool isHomeActive = !isRequestActive && !isCreateActive && !isProfileActive && !isAdminActive && !isStoreActive;
+        bool isHomeActive = !isRequestActive && !isCreateActive && !isChatActive && !isProfileActive && !isAdminActive && !isStoreActive;
     }
     <nav class="bottom-nav" id="zameelNavDock">
         <a asp-controller="Home" asp-action="Index" class="bottom-nav-item @(isHomeActive ? "active" : "")" title="الرئيسية">
@@ -155,6 +157,14 @@
         <!-- Floating Elevated Add Button in Middle -->
         <a asp-controller="Listings" asp-action="Create" class="bottom-nav-add-btn @(isCreateActive ? "active" : "")" title="أضف إعلان جديد">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </a>
+
+        <!-- Messages / Chat Tab -->
+        <a asp-controller="Chat" asp-action="Index" class="bottom-nav-item @(isChatActive ? "active" : "") position-relative" title="الرسائل والمحادثات">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>الرسائل</span>
         </a>
 
         @if (User.IsInRole("Admin"))

@@ -31,6 +31,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Comment> comments => Set<Comment>();
     public DbSet<Review> reviews => Set<Review>();
     public DbSet<ListingReport> listingReports => Set<ListingReport>();
+    public DbSet<ChatMessage> chatMessages => Set<ChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

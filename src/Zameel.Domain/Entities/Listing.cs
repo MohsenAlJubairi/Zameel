@@ -43,4 +43,5 @@ public class Listing : BaseEntity
     public ICollection<Comment> comments { get; set; } = new List<Comment>();
     public ICollection<ListingReport> reports { get; set; } = new List<ListingReport>();
     public ICollection<Review> reviews { get; set; } = new List<Review>();
+    public ICollection<ChatMessage> chatMessages { get; set; } = new List<ChatMessage>();
 }

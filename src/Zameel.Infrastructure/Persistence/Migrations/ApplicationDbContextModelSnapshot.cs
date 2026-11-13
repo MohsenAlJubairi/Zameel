@@ -22,6 +22,66 @@ namespace Zameel.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Zameel.Domain.Entities.ChatMessage", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("content")
+                        .IsRequired()
+                        .HasMaxLength(1500)
+                        .HasColumnType("nvarchar(1500)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("createdAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("createdAt");
+
+                    b.Property<bool>("isDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("isDeleted");
+
+                    b.Property<bool>("isRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("isRead");
+
+                    b.Property<Guid?>("listingId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("listingId");
+
+                    b.Property<DateTime?>("readAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("readAt");
+
+                    b.Property<Guid>("receiverId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("receiverId");
+
+                    b.Property<Guid>("senderId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("senderId");
+
+                    b.Property<DateTime?>("updatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updatedAt");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("listingId");
+
+                    b.HasIndex("receiverId", "isRead");
+
+                    b.HasIndex("senderId", "receiverId", "createdAt");
+
+                    b.ToTable("chatMessages", (string)null);
+                });
+
             modelBuilder.Entity("Zameel.Domain.Entities.Comment", b =>
                 {
                     b.Property<Guid>("id")
@@ -1077,6 +1137,32 @@ namespace Zameel.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Zameel.Domain.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("Zameel.Domain.Entities.Listing", "listing")
+                        .WithMany("chatMessages")
+                        .HasForeignKey("listingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Zameel.Domain.Entities.User", "receiver")
+                        .WithMany("receivedMessages")
+                        .HasForeignKey("receiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Zameel.Domain.Entities.User", "sender")
+                        .WithMany("sentMessages")
+                        .HasForeignKey("senderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("listing");
+
+                    b.Navigation("receiver");
+
+                    b.Navigation("sender");
+                });
+
             modelBuilder.Entity("Zameel.Domain.Entities.Comment", b =>
                 {
                     b.HasOne("Zameel.Domain.Entities.Listing", "listing")
@@ -1365,6 +1451,8 @@ namespace Zameel.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Zameel.Domain.Entities.Listing", b =>
                 {
+                    b.Navigation("chatMessages");
+
                     b.Navigation("comments");
 
                     b.Navigation("images");
@@ -1426,11 +1514,15 @@ namespace Zameel.Infrastructure.Persistence.Migrations
 
                     b.Navigation("listings");
 
+                    b.Navigation("receivedMessages");
+
                     b.Navigation("reportsSubmitted");
 
                     b.Navigation("reviewsGiven");
 
                     b.Navigation("reviewsReceived");
+
+                    b.Navigation("sentMessages");
 
                     b.Navigation("storeProfile");
                 });
